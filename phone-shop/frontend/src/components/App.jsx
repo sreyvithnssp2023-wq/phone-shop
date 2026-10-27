@@ -39,7 +39,7 @@ function MainLayout({ user }) {
           </h1>
           {user && (
             <div className="mt-2 text-xs text-indigo-400">
-              👤 {user?.full_name || user?.name || 'Admin'} ({user?.role || 'Admin'})
+              <i class="fa-jelly-duo fa-regular fa-user"></i> {user?.full_name || user?.name || 'Admin'} ({user?.role || 'Admin'})
             </div>
           )}
         </div>

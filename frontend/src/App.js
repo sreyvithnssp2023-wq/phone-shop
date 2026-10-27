@@ -1,136 +1,48 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, Navigate, Outlet } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { 
-  FiHome, 
-  FiShoppingCart, 
-  FiBox, 
-  FiGrid, 
-  FiBarChart2, 
-  FiTruck, 
-  FiShield, // 👈 Icon សម្រាប់ការធានា
-  FiLogOut 
-} from 'react-icons/fi';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-import Dashboard from './components/dashboard';
-import POS from './components/POS';
-import Products from './components/products';
-import Categories from './components/categories';
-import Report from './components/report';
-import Suppliers from './components/suppliers';
-import Warranties from './components/Warranties'; // 👈 Import Component ការធានា
-import Login from './components/login';
-import Logout from './components/logout';
+// Import Components
+import Navbar from './components/Navbar';
+import HeaderBar from './components/HeaderBar';
 
-function MainLayout({ user }) {
-  const navLinkStyle = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-      isActive
-        ? 'bg-indigo-600 text-white font-semibold'
-        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-    }`;
-
-  return (
-    <div className="flex min-h-screen bg-slate-100 text-slate-900">
-      <aside className="w-64 bg-slate-900 text-slate-100 flex flex-col fixed inset-y-0 left-0 z-30 shadow-xl">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-xl font-bold tracking-wide text-white">
-            Angkor-Electronic
-          </h1>
-          {user && (
-            <div className="mt-2 text-xs text-indigo-400">
-              👤 {user?.full_name || user?.name || 'Admin'} ({user?.role || 'Admin'})
-            </div>
-          )}
-        </div>
-
-        <nav className="flex-1 px-4 py-6 space-y-1">
-          <NavLink to="/dashboard" className={navLinkStyle}>
-            <FiHome size={18} />
-            <span>Dashboard</span>
-          </NavLink>
-
-          <NavLink to="/pos" className={navLinkStyle}>
-            <FiShoppingCart size={18} />
-            <span>POS</span>
-          </NavLink>
-
-          <NavLink to="/products" className={navLinkStyle}>
-            <FiBox size={18} />
-            <span>Products</span>
-          </NavLink>
-
-          <NavLink to="/categories" className={navLinkStyle}>
-            <FiGrid size={18} />
-            <span>Categories</span>
-          </NavLink>
-
-          <NavLink to="/report" className={navLinkStyle}>
-            <FiBarChart2 size={18} />
-            <span>Reports</span>
-          </NavLink>
-
-          <NavLink to="/suppliers" className={navLinkStyle}>
-            <FiTruck size={18} />
-            <span>Suppliers & Stock</span>
-          </NavLink>
-
-          {/* 🛡️ Menu ថ្មីនៅក្រោម Suppliers & Stock */}
-          <NavLink to="/warranties" className={navLinkStyle}>
-            <FiShield size={18} />
-            <span>Warranties</span>
-          </NavLink>
-        </nav>
-
-        <div className="p-4 border-t border-slate-800">
-          <NavLink to="/logout" className={navLinkStyle}>
-            <FiLogOut size={18} />
-            <span>Logout</span>
-          </NavLink>
-        </div>
-      </aside>
-
-      <main className="flex-1 ml-64 p-8 overflow-y-auto min-h-screen">
-        <Outlet />
-      </main>
-    </div>
-  );
-}
+// Import Pages / Views
+import Dashboard from './components/dashboard.jsx';
+import POS from './components/POS.jsx';             // ឬ pos.jsx
+import Products from './components/products.jsx';     // ឬ Products.jsx
+import Categories from './components/categories.jsx';
+import Report from './components/report.jsx';         // 🟢 ទំព័រ Report 
+import Suppliers from './components/suppliers.jsx';   // ឬ Suppliers.jsx
+import Warranties from './components/Warranties.jsx';  // ឬ warranties.jsx
+import EditProduct from './components/EditProduct.jsx';
+import Login from './components/login.jsx';
+import Logout from './components/logout.jsx';
 
 export default function App() {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('pos_user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
-  const handleSetUser = (userData) => {
-    setUser(userData);
-    if (userData) {
-      localStorage.setItem('pos_user', JSON.stringify(userData));
-    } else {
-      localStorage.removeItem('pos_user');
-    }
-  };
-
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" />
+    <Router>
+      <div className="flex min-h-screen bg-slate-100">
+        <Navbar />
 
-      <Routes>
-        <Route path="/login" element={<Login setUser={handleSetUser} />} />
-        <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+        <div className="flex-1 flex flex-col min-w-0">
+          <HeaderBar />
 
-        <Route element={<MainLayout user={user} />}>
-          <Route path="/dashboard" element={<Dashboard user={user} />} />
-          <Route path="/pos" element={<POS user={user} />} />
-          <Route path="/products" element={<Products user={user} />} />
-          <Route path="/categories" element={<Categories user={user} />} />
-          <Route path="/report" element={<Report user={user} />} />
-          <Route path="/suppliers" element={<Suppliers user={user} />} />
-          <Route path="/warranties" element={<Warranties user={user} />} /> {/* 👈 Route ថ្មី */}
-          <Route path="/logout" element={<Logout setUser={handleSetUser} />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          <main className="flex-1 p-6 overflow-y-auto">
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/pos" element={<POS />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/report" element={<Report />} />
+              <Route path="/suppliers" element={<Suppliers />} />
+              <Route path="/warranties" element={<Warranties />} />
+              <Route path="/edit-product" element={<EditProduct />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/logout" element={<Logout />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </Router>
   );
 }

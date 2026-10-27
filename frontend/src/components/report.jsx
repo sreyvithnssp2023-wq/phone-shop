@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FiDownload } from 'react-icons/fi';
+import { FiDownload, FiPrinter } from 'react-icons/fi';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000/api';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
 
 export default function Reports() {
   const [period, setPeriod] = useState('daily');
@@ -16,13 +16,18 @@ export default function Reports() {
   const fetchReportsData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/reports?period=${period}`);
-      if (res.data) {
-        // 1. Sales Data
+      let res;
+      try {
+        res = await axios.get(`${API_BASE}/reports?period=${period}`);
+      } catch (e) {
+        res = await axios.get(`http://127.0.0.1:8000/api/reports?period=${period}`);
+      }
+
+      if (res && res.data) {
         setSales({
           totals: {
             revenue: Number(res.data.total_revenue || 0),
-            orders: Number(res.data.total_orders || 0),
+            orders: Number(res.data.total_orders || res.data.total_sales || 0),
           },
           data: (res.data.sales_report || []).map((item) => ({
             date: item.period || 'N/A',
@@ -31,7 +36,6 @@ export default function Reports() {
           })),
         });
 
-        // 2. Product Performance
         setProducts(
           (res.data.product_performance || []).map((item) => ({
             name: item.product_name || 'N/A',
@@ -40,7 +44,6 @@ export default function Reports() {
           }))
         );
 
-        // 3. Customer Report
         setCustomers(
           (res.data.customer_report || []).map((c, index) => ({
             id: index + 1,
@@ -52,8 +55,7 @@ export default function Reports() {
         );
       }
     } catch (err) {
-      console.error('Error fetching reports data:', err);
-      toast.error('មិនអាចទាញយកទិន្នន័យរបាយការណ៍បានទេ!');
+      console.error('Error fetching reports:', err);
     } finally {
       setLoading(false);
     }
@@ -63,6 +65,7 @@ export default function Reports() {
     fetchReportsData();
   }, [period]);
 
+  // 📄 1. Export CSV
   const exportCsv = (rows, name) => {
     if (!rows || rows.length === 0) {
       toast.error('គ្មានទិន្នន័យសម្រាប់ Export ទេ!');
@@ -85,6 +88,73 @@ export default function Reports() {
     URL.revokeObjectURL(url);
   };
 
+  // 🖨️ 2. Export / Print PDF
+  const exportPdf = (title, headers, rows) => {
+    if (!rows || rows.length === 0) {
+      toast.error('គ្មានទិន្នន័យសម្រាប់ Export PDF ទេ!');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title} - ${period.toUpperCase()}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #333; }
+            h1 { font-size: 22px; margin-bottom: 5px; color: #1e293b; }
+            p { font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; font-size: 13px; }
+            th { background-color: #f1f5f9; font-weight: bold; color: #334155; uppercase; }
+            tr:nth-child(even) { background-color: #f8fafc; }
+            .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #94a3b8; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Angkor Electronic — ${title}</h1>
+          <p>របាយការណ៍សង្ខេប៖ ${period.toUpperCase()} | កាលបរិច្ឆេទបង្កើត៖ ${new Date().toLocaleDateString()}</p>
+          <table>
+            <thead>
+              <tr>
+                ${headers.map((h) => `<th>${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${rows
+                .map(
+                  (row) => `
+                <tr>
+                  ${Object.values(row)
+                    .map((val) => `<td>${val}</td>`)
+                    .join('')}
+                </tr>
+              `
+                )
+                .join('')}
+            </tbody>
+          </table>
+          <div class="footer">
+            Printed from POS System
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() { window.close(); };
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
@@ -101,12 +171,13 @@ export default function Reports() {
 
   return (
     <div className="p-4">
-      {/* Header Bar */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Reports</h1>
-        {tab === 'sales' && (
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1 bg-white border rounded-lg p-1">
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          {tab === 'sales' && (
+            <div className="flex gap-1 bg-white border rounded-lg p-1 mr-2">
               {['daily', 'weekly', 'monthly'].map((p) => (
                 <button
                   key={p}
@@ -121,17 +192,63 @@ export default function Reports() {
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => exportCsv(sales?.data || [], 'sales_report')}
-              className="px-3 py-1.5 bg-white border hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-semibold flex items-center gap-1 shadow-sm"
-            >
-              <FiDownload /> CSV
-            </button>
-          </div>
-        )}
+          )}
+
+          {/* Export CSV */}
+          <button
+            onClick={() => {
+              if (tab === 'sales') exportCsv(sales?.data || [], 'sales_report');
+              if (tab === 'products') exportCsv(products || [], 'product_report');
+              if (tab === 'customers') exportCsv(customers || [], 'customer_report');
+            }}
+            className="px-3 py-1.5 bg-white border hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-semibold flex items-center gap-1 shadow-sm"
+          >
+            <FiDownload /> CSV
+          </button>
+
+          {/* Export PDF / Print */}
+          <button
+            onClick={() => {
+              if (tab === 'sales') {
+                exportPdf(
+                  'Sales Report',
+                  ['Period', 'Orders', 'Revenue ($)'],
+                  (sales?.data || []).map((r) => ({
+                    date: r.date,
+                    orders: r.orders,
+                    revenue: `$${r.revenue.toFixed(2)}`,
+                  }))
+                );
+              } else if (tab === 'products') {
+                exportPdf(
+                  'Product Performance',
+                  ['Product Name', 'Units Sold', 'Revenue ($)'],
+                  (products || []).map((p) => ({
+                    name: p.name,
+                    units: p.units,
+                    revenue: `$${p.revenue.toFixed(2)}`,
+                  }))
+                );
+              } else if (tab === 'customers') {
+                exportPdf(
+                  'Customer Report',
+                  ['Customer Name', 'Phone', 'Orders', 'Total Spent ($)'],
+                  (customers || []).map((c) => ({
+                    name: c.name,
+                    phone: c.phone,
+                    orders: c.order_count,
+                    spent: `$${c.total_spent.toFixed(2)}`,
+                  }))
+                );
+              }
+            }}
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold flex items-center gap-1 shadow-sm transition"
+          >
+            <FiPrinter /> PDF
+          </button>
+        </div>
       </div>
 
-      {/* Tabs Switcher */}
       <div className="flex gap-2 mb-6">
         {tabs.map((t) => (
           <button
@@ -154,7 +271,7 @@ export default function Reports() {
           <div className="p-5 border-b flex justify-between items-center bg-slate-50/50">
             <h2 className="font-bold capitalize text-slate-800">Sales — {period}</h2>
             <span className="text-sm text-gray-500">
-              Total Revenue: {' '}
+              Total Revenue:{' '}
               <strong className="text-lg font-bold text-indigo-600">
                 ${(sales?.totals?.revenue || 0).toFixed(2)}
               </strong>{' '}
@@ -197,12 +314,6 @@ export default function Reports() {
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
           <div className="p-5 border-b flex justify-between items-center bg-slate-50/50">
             <h2 className="font-bold text-slate-800">Product Performance</h2>
-            <button
-              onClick={() => exportCsv(products || [], 'product_report')}
-              className="px-3 py-1.5 bg-white border hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-semibold flex items-center gap-1 shadow-sm"
-            >
-              <FiDownload /> CSV
-            </button>
           </div>
           <table className="w-full text-sm">
             <thead>
@@ -240,22 +351,6 @@ export default function Reports() {
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
           <div className="p-5 border-b flex justify-between items-center bg-slate-50/50">
             <h2 className="font-bold text-slate-800">Customer Report</h2>
-            <button
-              onClick={() =>
-                exportCsv(
-                  (customers || []).map((c) => ({
-                    name: c.name,
-                    phone: c.phone,
-                    orders: c.order_count,
-                    total_spent: c.total_spent,
-                  })),
-                  'customer_report'
-                )
-              }
-              className="px-3 py-1.5 bg-white border hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-semibold flex items-center gap-1 shadow-sm"
-            >
-              <FiDownload /> CSV
-            </button>
           </div>
           <table className="w-full text-sm">
             <thead>
