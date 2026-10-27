@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>❤️❤️❤️❤️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      /* Dropdown Menu CSS */
+      .dropdown {
+        width: 230px;
+        height: 141px;
+        background-color: white;
+        position: absolute;
+        top: 40px; /* Adjusted position to be below the button */
+        right: 0; /* Align to the right of the button */
+        z-index: 1;
+        line-height: 2.6;
+        display: none;
+        text-align: left;
+        box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.2);
+        color: black;
+        border-radius: 8px;
+      }
+
+      .dropdown_ul {
+        width: 180px;
+        height: 47px;
+        padding-left: 10px;
+        line-height: 47px;
+      }
+
+      .dropdown_ul:hover {
+        background-color: rgba(45, 43, 43, 0.1);
+      }
+
+      .menu_3:hover .dropdown {
+        display: block;
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen p-4"
+    style="
+      background: url('c0a9bdc9b4f9187ad49b13a6903559eb.jpg') center/cover
+        no-repeat;
+    "
+  >
+    <header class="flex items-center gap-4">
+      <div
+        class="w-14 h-14 rounded-full border-2 border-blue-500 flex items-center justify-center"
+      >
+        <img
+          alt="icons8-box-48.png"
+          class="w-10 h-10"
+          height="40"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA2UlEQVR4nK1QsQrCMBTsbzi7F6T0jq5uOhfnfoCbiM7V1TrrrrPuKk2iX6C/Iq4SqVLIqwTxwcELd7lcLgj+OSaOB4YcfUUcDxoNFHDQ5FEBcwkVdxAvazLU5F2Ty6bXLVdpQsegJPsaePigJHtuAiCtiXIFjN/nas9rfOr+n8w+AvJ4jqK2Im8auNpdk6ePIZlJBQ7rMQ2wUFHUeoEs6pzVSgmmvh0YciJ1MPM1sH1ICQrvBMBC6mDta6DIlZRg620AbKQO9t4dkDvH4JIkHQV0fWC1jsGv8wTnMjhvjyPaSAAAAABJRU5ErkJggg=="
+          width="40"
+        />
+      </div>
+      <h1
+        class="bg-white/80 rounded-full px-4 py-1 font-semibold text-lg text-black select-none"
+      >
+        Good evening,
+      </h1>
+      <div class="ml-auto flex items-center gap-4">
+        <button
+          aria-label="Messages"
+          class="relative w-10 h-10 rounded-full bg-white/80 flex items-center justify-center"
+        >
+          <i class="fas fa-comment-alt text-gray-700 text-lg"></i>
+          <span
+            class="absolute -top-1 -right-1 bg-[#b80f3a] text-white text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center"
+          >
+            1
+          </span>
+        </button>
+        <div class="menu_3">
+          <button
+            aria-label="Notifications"
+            class="relative w-10 h-10 rounded-full bg-white/80 flex items-center justify-center"
+          >
+            <i class="fas fa-bell text-gray-700 text-lg"></i>
+            <span
+              class="absolute -top-1 -right-1 bg-[#b80f3a] text-white text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center"
+            >
+              3
+            </span>
+          </button>
+          <div class="dropdown">
+            <ul class="dropdown_ul">
+              <li>Low Stock</li>
+              <li>Payment</li>
+              <li>Deadline</li>
+            </ul>
+          </div>
+        </div>
+        <div class="menu_3 relative">
+          <button
+            aria-label="User menu"
+            class="w-10 h-10 rounded-full overflow-hidden border-2 border-white/80"
+          >
+            <img
+              alt="User profile photo of group 5"
+              class="w-full h-full object-cover"
+              height="40"
+              src="photo_2025-10-02_19-34-50.jpg"
+              width="40"
+            />
+          </button>
+          <div class="dropdown">
+            <ul type="circle">
+              <li><div class="dropdown_ul">Profile</div></li>
+              <li><div class="dropdown_ul">Manege Profile</div></li>
+              <li><div class="dropdown_ul">Setting</div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex flex-col md:flex-row gap-4 mt-4">
+      <nav
+        class="w-full md:w-48 rounded-2xl bg-white/50 backdrop-blur-md p-4 flex flex-col gap-4"
+      >
+        <a
+          class="flex items-center gap-3 text-red-500 hover:bg-gray-200 rounded-lg p-2 transition-colors"
+          href="#"
+        >
+          <i class="fas fa-home text-xl"></i>
+          Dashboard
+        </a>
+        <a
+          class="flex items-center gap-3 text-blue-500 hover:bg-gray-200 rounded-lg p-2 transition-colors"
+          href="#"
+        >
+          <i class="fas fa-university text-xl"></i>
+          Products
+        </a>
+        <a
+          class="flex items-center gap-3 text-blue-500 hover:bg-gray-200 rounded-lg p-2 transition-colors"
+          href="#"
+        >
+          <i class="fas fa-sync-alt text-xl"></i>
+          Category
+        </a>
+        <a
+          class="flex items-center gap-3 text-blue-500 hover:bg-gray-200 rounded-lg p-2 transition-colors"
+          href="#"
+        >
+          <i class="fas fa-chart-bar text-xl"></i>
+          Sales
+        </a>
+        <a
+          class="flex items-center gap-3 text-blue-500 hover:bg-gray-200 rounded-lg p-2 transition-colors"
+          href="#"
+        >
+          <i class="fas fa-wallet text-xl"></i>
+          Reports
+        </a>
+        <a
+          class="flex items-center gap-3 text-blue-500 hover:bg-gray-200 rounded-lg p-2 transition-colors"
+          href="#"
+        >
+          <i class="fas fa-cog text-xl"></i>
+          Setting
+        </a>
+        <button
+          class="mt-auto flex items-center gap-3 text-red-500 font-semibold hover:bg-gray-200 rounded-lg p-2 transition-colors"
+          type="button"
+        >
+          <i class="fas fa-power-off"></i>
+          Log Out
+        </button>
+      </nav>
+
+      <section class="flex-1 flex flex-col gap-4">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div
+            class="flex-1 rounded-2xl bg-white/70 backdrop-blur-md px-4 py-3 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-purple-700 font-semibold text-sm uppercase">
+                Customers
+              </p>
+              <p class="text-green-600 font-semibold text-lg">31,210</p>
+            </div>
+            <i
+              aria-hidden="true"
+              class="fas fa-user-friends text-purple-700 text-3xl"
+            ></i>
+          </div>
+          <div
+            class="flex-1 rounded-2xl bg-white/70 backdrop-blur-md px-4 py-3 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-sky-500 font-semibold text-sm uppercase">
+                Incomes
+              </p>
+              <p class="text-blue-900 font-semibold text-lg">$980,530</p>
+            </div>
+            <i
+              aria-hidden="true"
+              class="fas fa-dollar-sign text-sky-500 text-3xl"
+            ></i>
+          </div>
+          <div
+            class="flex-1 rounded-2xl bg-white/70 backdrop-blur-md px-4 py-3 flex items-center justify-between"
+          >
+            <div>
+              <p class="text-pink-600 font-semibold text-sm uppercase">
+                Products Sold
+              </p>
+              <p class="text-yellow-400 font-semibold text-lg">$25,280</p>
+            </div>
+            <i
+              aria-hidden="true"
+              class="fas fa-chart-bar text-pink-600 text-3xl"
+            ></i>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-white/70 backdrop-blur-md p-4">
+          <h2 class="text-blue-900 font-semibold mb-2">Finance Flow</h2>
+          <div class="relative">
+            <canvas id="myChart" width="900" height="380"></canvas>
+            <div
+              class="absolute bottom-4 left-4 text-left text-blue-900 font-semibold"
+            >
+              <span class="block text-2xl font-bold">$52,210</span>
+              <span class="block text-sm">August 2025</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="rounded-2xl bg-white/70 backdrop-blur-md p-4 overflow-x-auto"
+        >
+          <h2 class="text-blue-900 font-semibold mb-2">Recent Orders</h2>
+          <table class="w-full text-left rounded-lg bg-white overflow-hidden">
+            <thead class="bg-white border-b border-gray-300">
+              <tr>
+                <th class="px-4 py-2 font-semibold text-sm text-gray-900">
+                  No
+                </th>
+                <th class="px-4 py-2 font-semibold text-sm text-gray-900">
+                  Name
+                </th>
+                <th class="px-4 py-2 font-semibold text-sm text-gray-900">
+                  Quantity
+                </th>
+                <th class="px-4 py-2 font-semibold text-sm text-gray-900">
+                  Status
+                </th>
+                <th class="px-4 py-2 font-semibold text-sm text-gray-900">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-gray-200">
+                <td class="px-4 py-2">1</td>
+                <td class="px-4 py-2">RTX 5090</td>
+                <td class="px-4 py-2">30</td>
+                <td class="px-4 py-2 text-red-700 font-semibold">Pending</td>
+                <td class="px-4 py-2 flex gap-2 text-orange-500">
+                  <button aria-label="Edit order 1">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button aria-label="Delete order 1" class="text-red-500">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr class="border-b border-gray-200">
+                <td class="px-4 py-2">2</td>
+                <td class="px-4 py-2">ASUS Monitor LED</td>
+                <td class="px-4 py-2">25</td>
+                <td class="px-4 py-2 text-green-600 font-semibold">Approved</td>
+                <td class="px-4 py-2 flex gap-2 text-orange-500">
+                  <button aria-label="Edit order 2">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button aria-label="Delete order 2" class="text-red-500">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr class="border-b border-gray-200">
+                <td class="px-4 py-2">3</td>
+                <td class="px-4 py-2">Mainboard</td>
+                <td class="px-4 py-2">20</td>
+                <td class="px-4 py-2 text-green-600 font-semibold">Approved</td>
+                <td class="px-4 py-2 flex gap-2 text-orange-500">
+                  <button aria-label="Edit order 3">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button aria-label="Delete order 3" class="text-red-500">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr class="border-b border-gray-200">
+                <td class="px-4 py-2">4</td>
+                <td class="px-4 py-2">CPU</td>
+                <td class="px-4 py-2">15</td>
+                <td class="px-4 py-2 text-red-700 font-semibold">Pending</td>
+                <td class="px-4 py-2 flex gap-2 text-orange-500">
+                  <button aria-label="Edit order 4">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button aria-label="Delete order 4" class="text-red-500">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr class="border-b border-gray-200">
+                <td class="px-4 py-2">5</td>
+                <td class="px-4 py-2">RAM</td>
+                <td class="px-4 py-2">12</td>
+                <td class="px-4 py-2 text-green-600 font-semibold">Approved</td>
+                <td class="px-4 py-2 flex gap-2 text-orange-500">
+                  <button aria-label="Edit order 5">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button aria-label="Delete order 5" class="text-red-500">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td class="px-4 py-2">6</td>
+                <td class="px-4 py-2">SSD</td>
+                <td class="px-4 py-2">16</td>
+                <td class="px-4 py-2 text-red-700 font-semibold">Pending</td>
+                <td class="px-4 py-2 flex gap-2 text-orange-500">
+                  <button aria-label="Edit order 6">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button aria-label="Delete order 6" class="text-red-500">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+  <script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.3.2/dist/chart.umd.js"
+    integrity="sha384-eI7PSr3L1XLISH8JdDII5YN/njoSsxfbrkCTnJrzXt+ENP5MOVBxD+l6sEG4zoLp"
+    crossorigin="anonymous"
+  ></script>
+  <script>
+    /* globals Chart:false */
+    (() => {
+      "use strict";
+      const ctx = document.getElementById("myChart");
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+          ],
+          datasets: [
+            {
+              data: [20000, 10000, 30000, 28000, 41000, 48000, 59000],
+              lineTension: 0,
+              backgroundColor: "transparent",
+              borderColor: "#6a0dad",
+              borderWidth: 2,
+              pointBackgroundColor: "#6a0dad",
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              boxPadding: 3,
+            },
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 60000,
+            },
+          },
+        },
+      });
+    })();
+  </script>
+</html>

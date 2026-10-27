@@ -1,0 +1,142 @@
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: url("https://i.ibb.co/VJx0YhP/bg.jpg") no-repeat center center fixed;
+  background-size: cover;
+  color: #333;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  background: transparent;
+}
+
+.topbar .left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logo {
+  background: #fff;
+  border-radius: 50%;
+  padding: 12px;
+  font-size: 20px;
+  color: #c0392b;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.topbar h2 {
+  background: #fff;
+  padding: 8px 18px;
+  border-radius: 25px;
+  font-size: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.topbar .right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.topbar .icon {
+  position: relative;
+  font-size: 18px;
+  color: #333;
+  cursor: pointer;
+}
+
+.topbar .icon .badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: red;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 50%;
+}
+
+.topbar img {
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  border: 2px solid #fff;
+}
+
+/* Cards */
+.cards {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.card {
+  flex: 1;
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.card .value {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.card i {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  font-size: 22px;
+}
+
+/* Color styles */
+.card.purple h3 {
+  color: #8e44ad;
+}
+
+.card.purple .value {
+  color: #27ae60;
+}
+
+.card.purple i {
+  color: #8e44ad;
+}
+
+.card.blue h3 {
+  color: #2980b9;
+}
+
+.card.blue .value {
+  color: #2c3e50;
+}
+
+.card.blue i {
+  color: #2980b9;
+}
+
+.card.pink h3 {
+  color: #e84393;
+}
+
+.card.pink .value {
+  color: #e67e22;
+}
+
+.card.pink i {
+  color: #e84393;
+}
