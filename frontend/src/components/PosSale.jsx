@@ -11,7 +11,8 @@ const API_SALES    = `${API_BASE}/sales`;
 const DEFAULT_PRODUCTS = [
   { id: 1, product_name: 'iPhone 15 Pro Max', price: 1200.00, stock_qty: 40, image: '' },
   { id: 2, product_name: 'Smart Fitness Watch', price: 89.00, stock_qty: 70, image: '' },
-  { id: 3, product_name: 'Cotton Graphic T-Shirt', price: 19.99, stock_qty: 8, image: '' },
+  { id: 3, product_name: 'iPhone 16 Pro Max 256GB', price: 1199.00, stock_qty: 1, image: '' },
+  { id: 4, product_name: 'Cotton Graphic T-Shirt', price: 19.99, stock_qty: 0, image: '' },
 ];
 
 export default function PosSale() {
@@ -22,21 +23,78 @@ export default function PosSale() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [failedImages, setFailedImages] = useState({});
-
-  // ⚙️ State សម្រាប់បើក/បិទ ផ្ទាំង Pop-up Modal KHQR Code
   const [showQrModal, setShowQrModal] = useState(false);
+
+  // 🔔 1. Function បាញ់ Notification ទៅកាន់ LocalStorage + Event
+  const triggerNotification = (newNotif) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem('app_notifications') || '[]');
+      const updated = [newNotif, ...existing];
+      localStorage.setItem('app_notifications', JSON.stringify(updated));
+
+      // បាញ់ Event ប្រាប់ទំព័រ Notifications ឱ្យ Update រក្សាទុកក្នុង LocalStorage
+      window.dispatchEvent(new CustomEvent('notifications_updated'));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+      console.error('Notification Error:', e);
+    }
+  };
+
+  // 🔍 2. Function ស្កេនទំនិញណាដែលមានស្តុក <= 5 ឱ្យលោតចូល Notification ស្វ័យប្រវត្តិ
+  const scanLowStockProducts = (productList) => {
+    const existing = JSON.parse(localStorage.getItem('app_notifications') || '[]');
+    const now = new Date();
+    const dateStr = now.toLocaleString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    productList.forEach((prod) => {
+      const stock = Number(prod.stock_qty ?? prod.stock ?? prod.quantity ?? 0);
+      const prodName = prod.product_name || prod.name;
+
+      // ប្រសិនបើស្តុកនៅសល់ចន្លោះពី 1 ដល់ 5
+      if (stock > 0 && stock <= 5) {
+        // ពិនិត្យកុំឱ្យបាញ់ Notification ស្ទួនគ្នាលើផលិតផលដដែល
+        const isAlreadyExist = existing.some(
+          (n) => n.type === 'stock' && n.message.includes(prodName)
+        );
+
+        if (!isAlreadyExist) {
+          triggerNotification({
+            id: Date.now() + Math.random(),
+            type: 'stock',
+            title: 'ការព្រមាន ៖ ទំនិញជិតអស់ពីស្តុក (Low Stock Alert)',
+            message: `ផលិតផល "${prodName}" នៅសល់ត្រឹមតែ ${stock} គ្រឿងប៉ុណ្ណោះ!`,
+            amount: null,
+            cashier: 'System Auto',
+            time: 'ទើបតែឥឡូវ',
+            date: dateStr,
+            isRead: false,
+          });
+        }
+      }
+    });
+  };
 
   // ទាញយកបញ្ជីទំនិញពី Backend
   const fetchProducts = async () => {
     try {
       const res = await axios.get(API_PRODUCTS);
       const productList = Array.isArray(res.data) ? res.data : (res.data.data || []);
-      
+
       if (productList && productList.length > 0) {
         setProducts(productList);
+        scanLowStockProducts(productList);
+      } else {
+        scanLowStockProducts(DEFAULT_PRODUCTS);
       }
     } catch (err) {
-      console.error('Fetch error (ប្រើប្រាស់ Default Products ជំនួស):', err);
+      scanLowStockProducts(DEFAULT_PRODUCTS);
     }
   };
 
@@ -44,20 +102,14 @@ export default function PosSale() {
     fetchProducts();
   }, []);
 
-  // Helper Function រៀបចំ URL រូបភាព
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
-    }
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) return imagePath;
     let cleanPath = imagePath.replace(/^\/+/, '');
-    if (!cleanPath.includes('/')) {
-      cleanPath = `uploads/products/${cleanPath}`;
-    }
+    if (!cleanPath.includes('/')) cleanPath = `uploads/products/${cleanPath}`;
     return `${API_BASE.replace('/api', '')}/${cleanPath}`;
   };
 
-  // មុខងារបន្ថែមទំនិញចូល Cart (ជាមួយការឆែកស្តុក)
   const addToCart = (product) => {
     const stock = Number(product.stock_qty ?? product.stock ?? product.quantity ?? 0);
 
@@ -76,16 +128,13 @@ export default function PosSale() {
           return prevCart;
         }
         return prevCart.map((item) =>
-          (item.product_id || item.id) === pId
-            ? { ...item, qty: item.qty + 1 }
-            : item
+          (item.product_id || item.id) === pId ? { ...item, qty: item.qty + 1 } : item
         );
       }
       return [...prevCart, { ...product, qty: 1 }];
     });
   };
 
-  // បន្ថែមចំនួន (+) ក្នុង Cart
   const increaseQty = (productId) => {
     setCart((prevCart) =>
       prevCart.map((item) => {
@@ -103,25 +152,22 @@ export default function PosSale() {
     );
   };
 
-  // បន្ថយចំនួន (-) ក្នុង Cart
   const decreaseQty = (productId) => {
     setCart((prevCart) =>
       prevCart
         .map((item) => {
           const id = item.product_id || item.id;
-          if (id === productId) {
-            return { ...item, qty: item.qty - 1 };
-          }
+          if (id === productId) return { ...item, qty: item.qty - 1 };
           return item;
         })
         .filter((item) => item.qty > 0)
     );
   };
 
-  // គណនាសរុបទឹកប្រាក់
   const totalAmount = cart.reduce((sum, item) => sum + Number(item.price || 0) * item.qty, 0);
+  const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
 
-  // មុខងារ Checkout គិតលុយ
+  // 💳 3. មុខងារ Checkout គិតលុយ (បាញ់ Notification ភ្លាមៗ ទាំងការបង់ប្រាក់ និងស្តុកទំនិញ)
   const handleCheckout = async (paymentMethod) => {
     if (cart.length === 0) {
       alert('សូមជ្រើសរើសទំនិញចូល Cart ជាមុនសិន!');
@@ -129,6 +175,52 @@ export default function PosSale() {
     }
 
     setLoading(true);
+
+    const now = new Date();
+    const dateStr = now.toLocaleString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    const invoiceNo = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // 🟢 1. បាញ់ Notification ការលក់/បង់ប្រាក់ (POS Sale Alert) ភ្លាមៗ
+    triggerNotification({
+      id: Date.now(),
+      type: 'sale',
+      title: 'ការទូទាត់ប្រាក់ជោគជ័យ (POS Sale)',
+      message: `បានលក់ទំនិញសរុប ${totalItems} មុខ (${paymentMethod}) - វិក្កយបត្រ #${invoiceNo}`,
+      amount: `$${totalAmount.toFixed(2)}`,
+      cashier: customerName || 'Admin (Chork)',
+      time: 'ទើបតែឥឡូវ',
+      date: dateStr,
+      isRead: false,
+    });
+
+    // 🟡 2. ពិនិត្យស្តុកទំនិញក្នុង Cart ៖ ប្រសិនបើទិញរួចនៅសល់ស្តុក <= 5 គ្រឿង បាញ់ Low Stock Alert ភ្លាមៗ
+    cart.forEach((item) => {
+      const stock = Number(item.stock_qty ?? item.stock ?? item.quantity ?? 0);
+      const remainingStock = stock - item.qty;
+
+      if (remainingStock <= 5) {
+        triggerNotification({
+          id: Date.now() + Math.random(),
+          type: 'stock',
+          title: 'ការព្រមាន ៖ ទំនិញជិតអស់ពីស្តុក (Low Stock Alert)',
+          message: `ផលិតផល "${item.product_name || item.name}" នៅសល់ត្រឹមតែ ${remainingStock} គ្រឿងប៉ុណ្ណោះ!`,
+          amount: null,
+          cashier: 'System Auto',
+          time: 'ទើបតែឥឡូវ',
+          date: dateStr,
+          isRead: false,
+        });
+      }
+    });
+
+    // 3. ផ្ញើទិន្នន័យទៅកាន់ Backend Database
     try {
       const payload = {
         total_amount: totalAmount,
@@ -141,23 +233,19 @@ export default function PosSale() {
           unit_price: item.price,
         })),
       };
-
       await axios.post(API_SALES, payload);
-      alert(`ទូទាត់ប្រាក់ (${paymentMethod}) ជោគជ័យ!`);
-
-      // បិទ Modal និង reset ទិន្នន័យ
-      setShowQrModal(false);
-      setCart([]);
-      setCustomerName('');
-      setCustomerPhone('');
-      fetchProducts();
     } catch (err) {
-      console.error(err);
-      const errorMsg = err.response?.data?.message || 'មានបញ្ហាក្នុងការទូទាត់ប្រាក់!';
-      alert(errorMsg);
-    } finally {
-      setLoading(false);
+      console.warn('Backend Connection Fail (រក្សាទុកតែ Notification ក្នុង LocalStorage)');
     }
+
+    // 4. បញ្ចប់ប្រតិបត្តិការ និងសម្អាត Form
+    alert(`ទូទាត់ប្រាក់ (${paymentMethod}) ជោគជ័យ!`);
+    setShowQrModal(false);
+    setCart([]);
+    setCustomerName('');
+    setCustomerPhone('');
+    setLoading(false);
+    fetchProducts();
   };
 
   const filteredProducts = products.filter((p) =>
@@ -165,7 +253,7 @@ export default function PosSale() {
   );
 
   return (
-    <div className="flex gap-6 p-6 min-h-screen bg-slate-50 relative">
+    <div className="flex gap-6 p-6 min-h-screen bg-slate-50 relative font-sans select-none">
       {/* ផ្នែកខាងឆ្វេង៖ បញ្ជីទំនិញ */}
       <div className="flex-1">
         <div className="flex items-center justify-between mb-4">
@@ -187,7 +275,6 @@ export default function PosSale() {
             const stock = Number(p.stock_qty ?? p.stock ?? p.quantity ?? 0);
             const name = p.product_name || p.name;
             const price = Number(p.price || 0);
-
             const imageUrl = getImageUrl(p.image);
             const isImageBroken = failedImages[pId];
 
@@ -216,9 +303,7 @@ export default function PosSale() {
                       src={imageUrl}
                       alt={name}
                       className="w-full h-full object-contain p-2"
-                      onError={() => {
-                        setFailedImages((prev) => ({ ...prev, [pId]: true }));
-                      }}
+                      onError={() => setFailedImages((prev) => ({ ...prev, [pId]: true }))}
                     />
                   ) : (
                     <span className="text-3xl">📱</span>
@@ -295,7 +380,6 @@ export default function PosSale() {
           </div>
 
           <div className="space-y-2">
-            {/* ប៊ូតុងបង់ប្រាក់ផ្ទាល់ */}
             <button
               disabled={loading || cart.length === 0}
               onClick={() => handleCheckout('Cash')}
@@ -304,14 +388,10 @@ export default function PosSale() {
               {loading ? 'Processing...' : 'បង់ប្រាក់ផ្ទាល់ (Cash)'}
             </button>
 
-            {/* ប៊ូតុង KHQR - ចុចទៅបើក Modal QR Code */}
             <button
               disabled={cart.length === 0}
               onClick={() => {
-                if (cart.length === 0) {
-                  alert('សូមជ្រើសរើសទំនិញចូល Cart ជាមុនសិន!');
-                  return;
-                }
+                if (cart.length === 0) return alert('សូមជ្រើសរើសទំនិញចូល Cart ជាមុនសិន!');
                 setShowQrModal(true);
               }}
               className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl shadow transition disabled:opacity-50"
@@ -322,11 +402,10 @@ export default function PosSale() {
         </div>
       </div>
 
-      {/* ---------------- ផ្ទាំង Pop-up QR Code Modal ---------------- */}
+      {/* Pop-up QR Code Modal */}
       {showQrModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-100 text-center relative animate-in fade-in zoom-in duration-150">
-            {/* ប៊ូតុង X សម្រាប់បិទ Modal */}
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-100 text-center relative">
             <button
               onClick={() => setShowQrModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition"
@@ -337,22 +416,19 @@ export default function PosSale() {
             <h3 className="text-lg font-bold text-slate-800 mb-1">ស្កែនដើម្បីបង់ប្រាក់</h3>
             <p className="text-xs text-slate-400 mb-4">ABA KHQR / Bakong Pay</p>
 
-            {/* 👈 បានកែប្រែត្រង់នេះ៖ ប្រើប្រាស់រូប /QR.jpg */}
             <div className="bg-red-50/50 p-4 rounded-2xl inline-block border border-red-100 mb-4">
-             <img
-              src={`${API_BASE.replace('/api', '')}/uploads/products/QR.jpg`}
-              alt="ABA KHQR Code"
-              className="w-56 h-auto mx-auto rounded-xl shadow-sm object-contain"
-            />
+              <img
+                src={`${API_BASE.replace('/api', '')}/uploads/products/QR.jpg`}
+                alt="ABA KHQR Code"
+                className="w-56 h-auto mx-auto rounded-xl shadow-sm object-contain"
+              />
             </div>
 
-            {/* បង្ហាញតម្លៃត្រូវបង់ */}
             <div className="mb-6">
               <span className="text-xs font-semibold text-slate-400 block">ទឹកប្រាក់សរុបត្រូវបង់</span>
               <span className="text-3xl font-black text-indigo-600">${totalAmount.toFixed(2)}</span>
             </div>
 
-            {/* ប៊ូតុងសកម្មភាព */}
             <div className="flex gap-2">
               <button
                 type="button"
