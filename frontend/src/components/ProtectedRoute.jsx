@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
+<<<<<<< HEAD
 export default function ProtectedRoute({ user, allowedRoles, children }) {
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -23,6 +24,19 @@ export default function ProtectedRoute({ user, allowedRoles, children }) {
         </div>
       </div>
     );
+=======
+export default function ProtectedRoute({ currentRole, allowedRoles, children }) {
+  const normalize = (str) => (str || '').toString().trim().toLowerCase();
+  const userRole = normalize(currentRole);
+
+  const isAllowed = allowedRoles.some((role) => {
+    const norm = normalize(role);
+    return norm === userRole || norm.includes(userRole) || userRole.includes(norm);
+  });
+
+  if (!isAllowed) {
+    return <Navigate to="/pos" replace />;
+>>>>>>> 7436276f0a05997a9e6e648fec0345256a4fc6f4
   }
 
   return children;
