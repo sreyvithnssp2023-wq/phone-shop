@@ -4,8 +4,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FiArrowLeft, FiSave } from 'react-icons/fi';
 
-const API_URL = 'http://localhost/phone-shop/Backend/public/api/products';
-const IMAGE_BASE_URL = 'http://localhost/phone-shop/Backend/public/';
+const API_URL = 'http://localhost/phone-shop/phone-shop/Backend/public/api/products';
+const IMAGE_BASE_URL = 'http://localhost/phone-shop/phone-shop/Backend/public/';
 
 export default function EditProduct() {
   const { id } = useParams();

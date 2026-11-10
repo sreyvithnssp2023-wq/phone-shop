@@ -57,34 +57,74 @@ export default function Settings({ user }) {
     return saved ? JSON.parse(saved) : defaultServices;
   });
 
-  // Save Handlers
+  // --- SAVE HANDLERS WITH STORAGE QUOTA PROTECTION ---
   const handleSaveShopInfo = (e) => {
     e.preventDefault();
-    localStorage.setItem('pos_shop_info', JSON.stringify(shopInfo));
-    toast.success('Shop details updated successfully!');
+    try {
+      localStorage.setItem('pos_shop_info', JSON.stringify(shopInfo));
+      toast.success('Shop details updated successfully!');
+    } catch (error) {
+      if (error.name === 'QuotaExceededError' || error.code === 22) {
+        toast.error('Local Storage is full! Please clear old data or upload a smaller image.');
+      } else {
+        toast.error('Failed to save shop details.');
+      }
+    }
   };
 
   const handleSaveHours = (e) => {
     e.preventDefault();
-    localStorage.setItem('pos_business_hours', JSON.stringify(businessHours));
-    toast.success('Business operating hours saved!');
+    try {
+      localStorage.setItem('pos_business_hours', JSON.stringify(businessHours));
+      toast.success('Business operating hours saved!');
+    } catch (error) {
+      toast.error('Failed to save operating hours.');
+    }
   };
 
   const handleSavePricing = (e) => {
     e.preventDefault();
-    localStorage.setItem('pos_service_prices', JSON.stringify(servicePrices));
-    toast.success('Service pricing configuration saved!');
+    try {
+      localStorage.setItem('pos_service_prices', JSON.stringify(servicePrices));
+      toast.success('Service pricing configuration saved!');
+    } catch (error) {
+      toast.error('Failed to save service pricing.');
+    }
   };
 
+  // --- LOGO UPLOAD WITH ENFORCED COMPRESSION & SIZE CHECK ---
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setShopInfo(prev => ({ ...prev, logo: reader.result }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Reject files over 500 KB before reading
+    if (file.size > 500 * 1024) {
+      toast.error('File too large! Please choose an image smaller than 500 KB.');
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 150; // Resize logo to 150px max width
+        const scaleFactor = MAX_WIDTH / img.width;
+
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * (scaleFactor < 1 ? scaleFactor : 1);
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // Compress image to lightweight JPEG string (50% quality)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+        setShopInfo(prev => ({ ...prev, logo: compressedBase64 }));
+        toast.success('Logo uploaded & compressed!');
+      };
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleToggleDay = (index) => {
@@ -107,7 +147,7 @@ export default function Settings({ user }) {
     setServicePrices(updated);
   };
 
-  // --- NEW: Data Backup & Restore Handlers ---
+  // --- BACKUP & RESTORE HANDLERS ---
   const handleExportBackup = () => {
     try {
       const backupData = {};
@@ -141,16 +181,15 @@ export default function Settings({ user }) {
         toast.success('System data restored successfully! Reloading...');
         setTimeout(() => window.location.reload(), 1200);
       } catch (error) {
-        toast.error('Invalid backup file format.');
+        toast.error('Invalid backup file format or storage quota exceeded.');
       }
     };
     reader.readAsText(file);
   };
 
-  // --- NEW: Clear Notifications History Handler ---
+  // --- CLEAR NOTIFICATION HISTORY HANDLER ---
   const handleClearNotifications = () => {
     if (window.confirm('Are you sure you want to clear all notification history?')) {
-      // Remove common notification keys used in storage
       localStorage.removeItem('pos_notifications');
       localStorage.removeItem('notifications');
       toast.success('Notification history cleared successfully!');

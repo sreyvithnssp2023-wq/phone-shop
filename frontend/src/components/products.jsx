@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+// 🟢 កំណត់ API Base URL រត់តាម XAMPP Apache backend ត្រឹមត្រូវ
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+
 function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,8 +17,12 @@ function Products() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost/phone-shop/Backend/public/api/products');
-      setProducts(Array.isArray(response.data) ? response.data : []);
+      // 🟢 ប្តូរមកប្រើ API_BASE វិញ
+      const response = await axios.get(`${API_BASE}/products`);
+      
+      // ការពារករណី Laravel ឆ្លើយតបមកជា [ ... ] ឬ { data: [ ... ] }
+      const list = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      setProducts(list);
       setError(null);
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -85,7 +92,6 @@ function Products() {
           <tbody>
             {sortedProducts.length > 0 ? (
               sortedProducts.map((item, index) => {
-                // រៀបលេខរៀងចាប់ពី ១ ឡើងទៅតាមលំដាប់ (1, 2, 3...)
                 const rowNumber = index + 1;
                 const nameVal = item.product_name || item.name || 'N/A';
                 const skuVal = item.sku || item.barcode || 'N/A';

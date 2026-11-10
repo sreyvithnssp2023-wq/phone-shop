@@ -31,7 +31,7 @@ export default function AddProduct() {
 
     try {
       await axios.post(
-        'http://localhost/phone-shop/Backend/public/api/products',
+        'http://localhost/phone-shop/phone-shop/Backend/public/api/products',
         formData,
         {
           headers: {

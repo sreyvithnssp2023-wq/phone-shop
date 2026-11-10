@@ -1,23 +1,32 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 
-export default function HeaderBar({ currentRole }) {
+export default function HeaderBar({ currentRole, currentUser }) {
   const location = useLocation();
 
-  // Determine user display name based on currentRole
+  // 🟢 ផ្គូផ្គងឈ្មោះ Dynamic តាម Admin ទាំង ២ និង Role ផ្សេងៗ
   const getUserName = () => {
-    if (!currentRole) return 'Som Sreyvith';
-    if (currentRole.includes('Chork')) return 'Chork Chansovanpanha';
-    if (currentRole.toLowerCase().includes('cashier')) return 'Som Sreyvith';
-    return 'Som Sreyvith';
+    if (currentRole === 'Admin (Chork)') {
+      return 'Chork Chansovanpanha';
+    }
+    if (currentRole === 'Admin (Bro)' || currentRole === 'Cashier') {
+      return 'Brovith';
+    }
+    if (currentRole === 'Technician (Fixer)' || currentRole?.toLowerCase().includes('tech')) {
+      return 'Marivith (Technician)';
+    }
+    return currentUser?.name || 'Brovith';
   };
 
-  // Map route paths to specific banner titles and descriptions
+  const displayRole = currentRole || currentUser?.role || 'Admin';
+
   const getPageBannerInfo = (path) => {
+    const userName = getUserName();
+
     switch (path) {
       case '/dashboard':
         return {
-          title: `Welcome back, ${getUserName()}!`,
+          title: `Welcome back, ${userName}!`,
           subtitle: 'Here is your live performance summary for Angkor-Electronic today.',
           showButton: true
         };
@@ -91,7 +100,7 @@ export default function HeaderBar({ currentRole }) {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <span className="bg-white/20 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full border border-white/20 tracking-wider inline-block">
-            {currentRole || 'ADMIN'}
+            {displayRole}
           </span>
           <h1 className="text-2xl md:text-3xl font-black mt-2 tracking-tight">
             {bannerInfo.title}

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
 import Navbar from './components/Navbar';
 import HeaderBar from './components/HeaderBar';
 import Dashboard from './components/dashboard';
@@ -15,13 +16,16 @@ import Settings from './components/Settings';
 import Login from './components/login';
 import { Toaster } from 'react-hot-toast';
 
-// Layout wrapper for authenticated pages (has Navbar & HeaderBar)
-function MainLayout({ currentRole, setCurrentRole, children }) {
+// 🟢 API Endpoint ភ្ជាប់ទៅកាន់ XAMPP Apache Backend
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+
+// Layout wrapper សម្រាប់ទំព័រដែលមាន Navbar & HeaderBar
+function MainLayout({ currentRole, setCurrentRole, currentUser, children }) {
   return (
-    <div className="flex h-screen bg-slate-100 overflow-hidden">
-      <Navbar currentRole={currentRole} setCurrentRole={setCurrentRole} />
+    <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
+      <Navbar currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser} />
       <div className="flex-1 flex flex-col overflow-y-auto">
-        <HeaderBar currentRole={currentRole} />
+        <HeaderBar currentRole={currentRole} currentUser={currentUser} />
         <main className="p-6 flex-1">
           {children}
         </main>
@@ -31,74 +35,128 @@ function MainLayout({ currentRole, setCurrentRole, children }) {
 }
 
 export default function App() {
-  const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem('userRole') || 'Admin (Chork)';
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem('authUser');
+    return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  const [currentRole, setCurrentRole] = useState(() => {
+    return currentUser?.role || currentUser?.roles || 'Admin';
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  // 🟢 ទាញយកព័ត៌មាន User ផ្ទាល់ពី MySQL Database តាម ID ដែលបាន Login ចូល
+  const fetchUserFromDB = async (loginUserId = null) => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_BASE}/users`);
+      const usersList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+
+      if (usersList.length > 0) {
+        const savedUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+        const targetId = loginUserId || savedUser?.id;
+
+        // ស្វែងរក User តាម ID ដែលបាន Login ចូល (បើគ្មានទេ ទើបយក User ទី១)
+        const activeUser = usersList.find((u) => String(u.id) === String(targetId)) || usersList[0];
+        
+        setCurrentUser(activeUser);
+        setCurrentRole(activeUser.role || activeUser.roles || 'Admin');
+        localStorage.setItem('authUser', JSON.stringify(activeUser));
+      }
+    } catch (err) {
+      console.error('Error fetching user data from MySQL:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserFromDB();
+  }, []);
+
+  const handleLoginSuccess = (userObj) => {
+    if (userObj) {
+      setCurrentUser(userObj);
+      setCurrentRole(userObj.role || userObj.roles || 'Admin');
+      localStorage.setItem('authUser', JSON.stringify(userObj));
+    }
+    fetchUserFromDB(userObj?.id);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-100 text-slate-600 font-bold text-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <span>កំពុងភ្ជាប់ទៅកាន់ MySQL Database...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Router>
       <Toaster position="top-right" />
       <Routes>
-        {/* Standalone Fullscreen Login Page */}
-        <Route path="/login" element={<Login setCurrentRole={setCurrentRole} />} />
+        <Route path="/login" element={<Login setCurrentRole={setCurrentRole} onLoginSuccess={handleLoginSuccess} />} />
         
-        {/* Logout route redirects directly to login */}
-        <Route path="/logout" element={<Navigate to="/login" replace />} />
+        <Route path="/logout" element={
+          <Navigate to="/login" replace />
+        } />
 
-        {/* All Dashboard & System Pages wrapped inside MainLayout */}
         <Route path="/dashboard" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
-            <Dashboard currentRole={currentRole} />
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
+            <Dashboard currentRole={currentRole} currentUser={currentUser} />
           </MainLayout>
         } />
         <Route path="/pos" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
-            <POS />
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
+            <POS currentUser={currentUser} />
           </MainLayout>
         } />
         <Route path="/products" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
             <Products />
           </MainLayout>
         } />
         <Route path="/categories" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
             <Categories />
           </MainLayout>
         } />
         <Route path="/repairs" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
-            <Repairs />
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
+            <Repairs currentUser={currentUser} />
           </MainLayout>
         } />
         <Route path="/notifications" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
             <Notifications />
           </MainLayout>
         } />
         <Route path="/reports" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
             <Reports />
           </MainLayout>
         } />
         <Route path="/suppliers" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
             <Suppliers />
           </MainLayout>
         } />
         <Route path="/warranties" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
             <Warranties />
           </MainLayout>
         } />
         <Route path="/settings" element={
-          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole}>
-            <Settings />
+          <MainLayout currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser}>
+            <Settings currentUser={currentUser} />
           </MainLayout>
         } />
 
-        {/* Default fallback route */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   );

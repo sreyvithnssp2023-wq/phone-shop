@@ -20,9 +20,19 @@ import {
   Filler,
 } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+  Filler
+);
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1/phone-shop/Backend/public/api';
+const API_BASE =
+  process.env.REACT_APP_API_BASE_URL ||
+  'http://localhost/phone-shop/phone-shop/Backend/public/api';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-100 text-amber-700',
@@ -35,10 +45,10 @@ const STATUS_COLORS = {
 
 function StatCard({ label, value, icon, color }) {
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
       <div>
-        <p className="text-xs text-gray-500 font-medium">{label}</p>
-        <p className="text-xl font-bold text-gray-800 mt-1">{value}</p>
+        <p className="text-xs text-slate-400 font-semibold">{label}</p>
+        <p className="text-xl font-bold text-slate-800 mt-1">{value}</p>
       </div>
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${color}`}>
         {icon}
@@ -47,7 +57,7 @@ function StatCard({ label, value, icon, color }) {
   );
 }
 
-export default function Dashboard() {
+export default function Dashboard({ currentRole, currentUser }) {
   const [overview, setOverview] = useState({
     today_orders: 0,
     today_revenue: 0,
@@ -96,14 +106,14 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const res = await axios.get(`${API_BASE}/dashboard?period=${selectedPeriod}`);
-      if (res.data) {
+      if (res.data && (res.data.todays_orders !== undefined || res.data.today_orders !== undefined)) {
         const data = res.data;
 
         const formattedRecentOrders = (data.recent_orders || []).map((o) => ({
           id: o.sale_id || o.id,
           order_number: `${o.sale_id || o.id}`,
           customer_name: o.customer_name || 'POS Customer',
-          total: Number(o.total_amount || 0),
+          total: Number(o.total_amount || o.total || 0),
           currency: 'USD',
           payment_status: o.payment_status ? o.payment_status.toLowerCase() : 'paid',
           order_status: 'completed',
@@ -118,12 +128,10 @@ export default function Dashboard() {
           recent_orders: formattedRecentOrders,
         });
 
-        // 🔄 ទាញយក Keys គ្រប់ទម្រង់ពី Backend
         const rawDaily = data.daily || data.daily_chart || data.chart_data || data.chartData || [];
         const rawWeekly = data.weekly || data.weekly_chart || data.weekly_chart_data || [];
         const rawMonthly = data.monthly || data.monthly_chart || data.monthly_chart_data || [];
 
-        // Helper function សម្រាប់ចាប់យក ថ្ងៃ/ខែ និង ទឹកប្រាក់ឱ្យត្រូវ
         const mapChartItems = (arr, fallbackArr) => {
           if (!Array.isArray(arr) || arr.length === 0) return fallbackArr;
           return arr.map((item) => ({
@@ -137,9 +145,67 @@ export default function Dashboard() {
           weekly: mapChartItems(rawWeekly, salesChart.weekly),
           monthly: mapChartItems(rawMonthly, salesChart.monthly),
         });
+        return;
       }
     } catch (err) {
-      console.error('Error fetching dashboard data:', err);
+      console.warn('Dashboard API route not found, switching to fallback aggregation...', err);
+    }
+
+    try {
+      const [salesRes, productsRes, usersRes] = await Promise.allSettled([
+        axios.get(`${API_BASE}/sales`),
+        axios.get(`${API_BASE}/products`),
+        axios.get(`${API_BASE}/users`),
+      ]);
+
+      const sales = salesRes.status === 'fulfilled' && Array.isArray(salesRes.value.data)
+        ? salesRes.value.data
+        : salesRes.value?.value?.data?.data || [];
+
+      const products = productsRes.status === 'fulfilled' && Array.isArray(productsRes.value.data)
+        ? productsRes.value.data
+        : productsRes.value?.value?.data?.data || [];
+
+      const users = usersRes.status === 'fulfilled' && Array.isArray(usersRes.value.data)
+        ? usersRes.value.data
+        : usersRes.value?.value?.data?.data || [];
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      let todayOrdersCount = 0;
+      let todayRev = 0;
+      let totalRev = 0;
+
+      const recent = sales.slice(-5).reverse().map((o) => ({
+        id: o.id,
+        order_number: `${o.id}`,
+        customer_name: o.customer_name || 'POS Customer',
+        total: Number(o.total_amount || o.total || 0),
+        currency: 'USD',
+        payment_status: 'paid',
+        order_status: 'completed',
+      }));
+
+      sales.forEach((sale) => {
+        const amt = Number(sale.total_amount || sale.total || 0);
+        totalRev += amt;
+        const saleDate = sale.created_at ? sale.created_at.split('T')[0] : '';
+        if (saleDate === todayStr) {
+          todayOrdersCount += 1;
+          todayRev += amt;
+        }
+      });
+
+      setOverview({
+        today_orders: todayOrdersCount,
+        today_revenue: todayRev,
+        total_products: products.length,
+        total_customers: users.length,
+        total_revenue: totalRev,
+        recent_orders: recent,
+      });
+
+    } catch (fallbackErr) {
+      console.error('Fallback aggregation error:', fallbackErr);
     } finally {
       setLoading(false);
     }
@@ -149,7 +215,6 @@ export default function Dashboard() {
     fetchDashboardData(period);
   }, [period]);
 
-  // 📊 ទាញយកទិន្នន័យ Chart ដោយផ្ទាល់តាម Period (Daily / Weekly / Monthly)
   const currentChartData = salesChart[period] || [];
 
   const chartData = {
@@ -184,19 +249,27 @@ export default function Dashboard() {
     },
   };
 
+  const displayName = currentUser?.name || 'Brovith';
+
   return (
-    <div className="p-2">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
+    <div className="p-2 space-y-6 font-sans select-none">
+      {/* 🟢 ចាប់ផ្តើមភ្លាមៗពី Dashboard Overview ដោយគ្មាន Banner ពណ៌ខៀវស្ទួន */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Dashboard Overview</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Welcome back, <span className="font-bold text-indigo-600">{displayName}</span> ({currentRole || 'Cashier'})
+          </p>
+        </div>
         <button
           onClick={() => alert('Storefront preview coming soon.')}
-          className="bg-white border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition"
+          className="bg-white border border-slate-200 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition"
         >
           View my storefront ↗
         </button>
       </div>
 
-      {/* Metrics Cards */}
+      {/* Metrics Cards ទាំង ៥ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           label="Today's Orders"
@@ -230,19 +303,19 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Sales Chart */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mt-6 border border-gray-100">
+      {/* Sales Line Chart */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-gray-800">Sales Chart</h2>
+          <h2 className="font-bold text-slate-800">Sales Chart</h2>
           <div className="flex gap-2">
             {['daily', 'weekly', 'monthly'].map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition ${
                   period === p
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 {p}
@@ -261,52 +334,54 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Orders Table */}
-      <div className="bg-white rounded-xl shadow-sm mt-6 overflow-hidden border border-gray-100">
-        <div className="p-5 border-b flex items-center justify-between">
-          <h2 className="font-bold text-gray-800">Recent Orders</h2>
-          <Link to="/pos" className="text-sm text-indigo-600 hover:underline font-semibold">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <h2 className="font-bold text-slate-800">Recent Orders</h2>
+          <Link to="/pos" className="text-xs text-indigo-600 hover:underline font-bold">
             Go to POS ➔
           </Link>
         </div>
         {overview.recent_orders.length === 0 ? (
-          <p className="text-center text-gray-400 py-8">
-            {loading ? 'Loading stats...' : 'No orders recorded.'}
+          <p className="text-center text-slate-400 py-8 text-xs">
+            {loading ? 'Loading stats...' : 'No orders recorded in MySQL Database.'}
           </p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 text-left text-xs uppercase text-gray-500">
-                <th className="px-4 py-3">Order</th>
-                <th className="px-4 py-3">Customer</th>
-                <th className="px-4 py-3">Total</th>
-                <th className="px-4 py-3">Payment</th>
-                <th className="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {overview.recent_orders.map((o) => (
-                <tr key={o.id} className="hover:bg-slate-50 transition">
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-800">
-                    #{o.order_number}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-slate-700">{o.customer_name}</td>
-                  <td className="px-4 py-3 font-bold text-slate-800">
-                    ${o.total.toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                      {o.payment_status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[o.order_status] || STATUS_COLORS.completed}`}>
-                      {o.order_status}
-                    </span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-slate-50 text-left uppercase text-slate-400 font-bold border-b border-slate-100">
+                  <th className="px-5 py-3">Order</th>
+                  <th className="px-5 py-3">Customer</th>
+                  <th className="px-5 py-3">Total</th>
+                  <th className="px-5 py-3">Payment</th>
+                  <th className="px-5 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {overview.recent_orders.map((o) => (
+                  <tr key={o.id} className="hover:bg-slate-50 transition">
+                    <td className="px-5 py-3 font-mono font-bold text-indigo-600">
+                      #{o.order_number}
+                    </td>
+                    <td className="px-5 py-3 text-slate-800 font-bold">{o.customer_name}</td>
+                    <td className="px-5 py-3 font-bold text-slate-900">
+                      ${o.total.toFixed(2)}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                        {o.payment_status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold capitalize ${STATUS_COLORS[o.order_status] || STATUS_COLORS.completed}`}>
+                        {o.order_status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

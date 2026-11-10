@@ -4,8 +4,8 @@ import toast from 'react-hot-toast';
 import { FiEdit, FiEye, FiTrash2, FiX } from 'react-icons/fi';
 import axios from 'axios';
 
-const API_URL = 'http://localhost/phone-shop/Backend/public/api/products';
-const IMAGE_BASE_URL = 'http://localhost/phone-shop/Backend/public/';
+const API_URL = 'http://localhost/phone-shop/phone-shop/Backend/public/api/products';
+const IMAGE_BASE_URL = 'http://localhost/phone-shop/phone-shop/Backend/public/';
 
 export default function Products() {
   const [products, setProducts] = useState([]);

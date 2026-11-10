@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { FiUser, FiShield, FiKey } from 'react-icons/fi';
+
+// 🟢 កំណត់ Base URL រត់តាម XAMPP Apache Backend
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
 
 export default function Profile({ user }) {
   const [passForm, setPassForm] = useState({
@@ -8,9 +12,11 @@ export default function Profile({ user }) {
     newPassword: '',
     confirmPassword: ''
   });
+  const [loading, setLoading] = useState(false);
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
+
     if (!passForm.currentPassword || !passForm.newPassword || !passForm.confirmPassword) {
       toast.error('Please fill in all password fields!');
       return;
@@ -24,12 +30,33 @@ export default function Profile({ user }) {
       return;
     }
 
-    toast.success('Password changed successfully!');
-    setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    try {
+      setLoading(true);
+
+      // 🟢 ផ្ញើសំណើទៅកាន់ Backend ដើម្បីប្តូរ Password ក្នុង Database
+      const res = await axios.put(`${API_BASE}/change-password`, {
+        user_id: user?.id,
+        current_password: passForm.currentPassword,
+        new_password: passForm.newPassword,
+        new_password_confirmation: passForm.confirmPassword
+      });
+
+      toast.success(res.data?.message || 'Password changed successfully!');
+      setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      console.error('Password Change Error:', err);
+      toast.error(
+        err.response?.data?.message || 
+        err.response?.data?.error || 
+        'Failed to update password! Check backend connection.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto font-sans">
       <div>
         <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2.5">
           <FiUser className="text-blue-600" />
@@ -51,18 +78,18 @@ export default function Profile({ user }) {
 
           <div className="flex flex-col items-center justify-center py-4">
             <div className="w-20 h-20 rounded-full bg-blue-600 text-white font-black text-3xl flex items-center justify-center shadow-lg mb-3">
-              {user?.full_name?.charAt(0) || user?.role?.charAt(0) || 'U'}
+              {user?.full_name?.charAt(0) || user?.name?.charAt(0) || user?.role?.charAt(0) || 'U'}
             </div>
-            <h3 className="text-base font-black text-slate-900">{user?.full_name || 'User'}</h3>
-            <span className="text-xs bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full mt-1">
+            <h3 className="text-base font-black text-slate-900">{user?.full_name || user?.name || 'User'}</h3>
+            <span className="text-xs bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full mt-1 uppercase">
               Role: {user?.role || 'Staff'}
             </span>
           </div>
 
-          <div className="space-y-2 text-xs border-t pt-4">
+          <div className="space-y-2 text-xs border-t border-slate-100 pt-4">
             <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500">Username:</span>
-              <span className="font-mono font-bold text-slate-800">{user?.username || 'user'}</span>
+              <span className="text-slate-500">Username / Email:</span>
+              <span className="font-mono font-bold text-slate-800">{user?.username || user?.email || 'user'}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">System Access Status:</span>
@@ -117,9 +144,12 @@ export default function Profile({ user }) {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider mt-2"
+              disabled={loading}
+              className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider mt-2 ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              Update Password
+              {loading ? 'Updating Password...' : 'Update Password'}
             </button>
           </form>
         </div>

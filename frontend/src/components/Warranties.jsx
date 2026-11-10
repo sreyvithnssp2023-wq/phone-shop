@@ -27,7 +27,7 @@ export default function Warranties({ user }) {
   });
 
   // URL របស់ Backend Laravel
-  const API_BASE = 'http://localhost/phone-shop/Backend/public/api';
+  const API_BASE = 'http://localhost/phone-shop/phone-shop/Backend/public/api';
 
   useEffect(() => {
     fetchWarranties();

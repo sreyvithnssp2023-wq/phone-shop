@@ -1,432 +1,394 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FiTool, 
-  FiPlus, 
-  FiCheckCircle, 
-  FiClock, 
-  FiSearch, 
-  FiCamera, 
-  FiEye, 
-  FiX, 
-  FiTrash2,
-  FiDollarSign 
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import {
+  FiTool,
+  FiPlus,
+  FiSearch,
+  FiX,
+  FiCamera,
+  FiImage
 } from 'react-icons/fi';
-import { toast } from 'react-hot-toast';
 
-export default function Repairs({ user }) {
-  const [tickets, setTickets] = useState([]);
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+const NATIVE_API = 'http://localhost/phone-shop/repairs.php';
+
+export default function Repairs() {
+  const [repairs, setRepairs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
-  // Form State with Multi-Photo Array
-  const [formData, setFormData] = useState({
-    customerName: '',
-    customerPhone: '',
-    deviceModel: '',
-    problemDescription: '',
-    estimatedCost: '',
-    beforePhotos: []
+  const [form, setForm] = useState({
+    ticket_code: '',
+    customer_name: '',
+    customer_phone: '',
+    device_name: '',
+    problem_description: '',
+    estimated_cost: '',
+    technician_name: 'Admin',
+    status: 'Pending',
+    damage_images: [],
   });
 
+  const fetchRepairs = async () => {
+    try {
+      setLoading(true);
+      let res;
+      try {
+        res = await axios.get(`${API_BASE}/repairs`);
+      } catch (err) {
+        res = await axios.get(NATIVE_API);
+      }
+      const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      setRepairs(list);
+    } catch (err) {
+      console.error('Error fetching repairs:', err);
+      toast.error('មិនអាចទាញយកទិន្នន័យ Repairs បានទេ!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const savedTickets = JSON.parse(localStorage.getItem('pos_repair_tickets') || '[]');
-    setTickets(savedTickets);
+    fetchRepairs();
   }, []);
 
-  // Handle Multiple Photo Uploads
-  const handlePhotoUpload = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(file => {
+  const handleOpenModal = () => {
+    setImagePreview(null);
+    setForm({
+      ticket_code: `REP-${Math.floor(100000 + Math.random() * 900000)}`,
+      customer_name: '',
+      customer_phone: '',
+      device_name: '',
+      problem_description: '',
+      estimated_cost: '',
+      technician_name: 'Admin',
+      status: 'Pending',
+      damage_images: [],
+    });
+    setModalOpen(true);
+  };
+
+  // ជំនួយការបម្លែងរូបថតជា Base64
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({
+        setImagePreview(reader.result);
+        setForm(prev => ({
           ...prev,
-          beforePhotos: [...prev.beforePhotos, reader.result]
+          damage_images: [reader.result]
         }));
       };
       reader.readAsDataURL(file);
-    });
+    }
   };
 
-  const removePhoto = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      beforePhotos: prev.beforePhotos.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.customerName || !formData.deviceModel) return;
+    if (!form.customer_name || !form.device_name) {
+      toast.error('សូមបញ្ចូលឈ្មោះអតិថិជន និងឈ្មោះឧបករណ៍!');
+      return;
+    }
 
-    const ticketId = `REP-${Date.now().toString().slice(-5)}`;
-    const currentTime = new Date().toLocaleString();
+    setSubmitting(true);
+    try {
+      try {
+        await axios.post(`${API_BASE}/repairs`, form);
+      } catch (err) {
+        await axios.post(NATIVE_API, form);
+      }
 
-    const newTicket = {
-      id: ticketId,
-      customerName: formData.customerName,
-      customerPhone: formData.customerPhone,
-      deviceModel: formData.deviceModel,
-      problemDescription: formData.problemDescription,
-      estimatedCost: formData.estimatedCost || '0.00',
-      beforePhotos: formData.beforePhotos || [],
-      status: 'Pending',
-      createdDate: currentTime,
-      createdBy: user?.full_name || user?.name || 'Staff'
-    };
-
-    const updatedTickets = [newTicket, ...tickets];
-    setTickets(updatedTickets);
-    localStorage.setItem('pos_repair_tickets', JSON.stringify(updatedTickets));
-
-    // Push Notification with Photos for Admin
-    const existingNotifs = JSON.parse(localStorage.getItem('pos_notifications') || '[]');
-    const newNotification = {
-      id: Date.now(),
-      type: 'REPAIR',
-      ticketId: ticketId,
-      message: `New Repair Ticket (${ticketId}) - Device: ${newTicket.deviceModel} | Issue: ${newTicket.problemDescription || 'N/A'}`,
-      amount: `$${newTicket.estimatedCost}`,
-      time: currentTime,
-      photos: newTicket.beforePhotos,
-      read: false
-    };
-    localStorage.setItem('pos_notifications', JSON.stringify([newNotification, ...existingNotifs]));
-
-    toast.success('Repair ticket created & sent to admin notifications!');
-
-    setFormData({
-      customerName: '',
-      customerPhone: '',
-      deviceModel: '',
-      problemDescription: '',
-      estimatedCost: '',
-      beforePhotos: []
-    });
-    setIsModalOpen(false);
+      toast.success('🎉 បង្កើត Ticket ជួសជុលជោគជ័យ!');
+      setModalOpen(false);
+      fetchRepairs();
+    } catch (err) {
+      console.error(err);
+      toast.error('មិនអាចរក្សាទុកទិន្នន័យបានទេ!');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleStatusChange = (ticketId, newStatus) => {
-    const updatedTickets = tickets.map(t => 
-      t.id === ticketId ? { ...t, status: newStatus } : t
+  const handleStatusChange = async (ticketCodeOrId, newStatus) => {
+    try {
+      try {
+        await axios.put(`${API_BASE}/repairs/${ticketCodeOrId}`, { status: newStatus });
+      } catch (err) {
+        await axios.post(NATIVE_API, {
+          _method: 'PUT',
+          ticket_code: ticketCodeOrId,
+          status: newStatus,
+        });
+      }
+
+      toast.success(`ប្តូរស្ថានភាពទៅជា ${newStatus} រួចរាល់!`);
+      fetchRepairs();
+    } catch (err) {
+      toast.error('មិនអាចប្តូរស្ថានភាពបានទេ!');
+    }
+  };
+
+  const filteredRepairs = repairs.filter((r) => {
+    const cust = r.customer_name || r.customerName || '';
+    const dev = r.device_name || r.deviceModel || '';
+    const code = r.ticket_code || r.id || '';
+    return (
+      cust.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dev.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(code).toLowerCase().includes(searchTerm.toLowerCase())
     );
-    setTickets(updatedTickets);
-    localStorage.setItem('pos_repair_tickets', JSON.stringify(updatedTickets));
-
-    const targetTicket = tickets.find(t => t.id === ticketId);
-    const currentTime = new Date().toLocaleString();
-    const existingNotifs = JSON.parse(localStorage.getItem('pos_notifications') || '[]');
-    
-    const statusNotification = {
-      id: Date.now(),
-      type: 'REPAIR_STATUS',
-      ticketId: ticketId,
-      message: `Repair Ticket ${ticketId} (${targetTicket?.deviceModel || 'Device'}) status updated to: ${newStatus}`,
-      amount: `$${targetTicket?.estimatedCost || '0.00'}`,
-      time: currentTime,
-      photos: targetTicket?.beforePhotos || [],
-      read: false
-    };
-    localStorage.setItem('pos_notifications', JSON.stringify([statusNotification, ...existingNotifs]));
-
-    toast.success(`Repair status updated to ${newStatus}`);
-  };
-
-  const filteredTickets = tickets.filter(t => 
-    t.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.deviceModel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.id?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  });
 
   return (
-    <div className="space-y-6">
-      
-      {/* Header */}
+    <div className="p-4 md:p-6 space-y-6 font-sans select-none">
+      {/* Top Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
         <div>
           <h1 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-            <FiTool className="text-blue-600" />
-            <span>Repair & Service Desk</span>
+            <FiTool className="text-indigo-600" />
+            <span>Repair Service Management</span>
           </h1>
           <p className="text-slate-500 text-xs md:text-sm mt-1">
-            Register new repair tickets with multiple damage photos and manage technician workflow queues.
+            Track incoming customer device repairs and technician statuses.
           </p>
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-2xl shadow-lg shadow-blue-600/30 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+          onClick={handleOpenModal}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-2xl shadow-lg shadow-indigo-600/30 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
         >
           <FiPlus size={16} />
           <span>New Repair Ticket</span>
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-        <input
-          type="text"
-          placeholder="Search repair tickets by customer, device, or ID..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-        />
-      </div>
+      {/* Main Table Content */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="font-extrabold text-slate-800 text-sm">
+            Active Repair Queue ({filteredRepairs.length})
+          </div>
 
-      {/* Repair Tickets Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-5 border-b border-slate-100 font-extrabold text-slate-800 text-sm">
-          Active Repair Queue & Historical Records ({filteredTickets.length})
+          <div className="relative w-full md:w-72">
+            <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+            <input
+              type="text"
+              placeholder="Search by customer, device, or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+          </div>
         </div>
 
-        {filteredTickets.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-sm font-medium">
-            No repair tickets found. Click "New Repair Ticket" to create one.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs md:text-sm">
-              <thead>
-                <tr className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] border-b border-slate-200">
-                  <th className="p-4 font-bold">Damage Photos</th>
-                  <th className="p-4 font-bold">Ticket ID & Device</th>
-                  <th className="p-4 font-bold">Customer Info</th>
-                  <th className="p-4 font-bold">Issue Description</th>
-                  <th className="p-4 font-bold">Est. Cost</th>
-                  <th className="p-4 font-bold">Status</th>
-                  <th className="p-4 font-bold text-center">Action</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-200">
+                <th className="px-6 py-4">TICKET / CODE</th>
+                <th className="px-6 py-4">CUSTOMER</th>
+                <th className="px-6 py-4">DEVICE & PROBLEM</th>
+                <th className="px-6 py-4">ESTIMATED COST</th>
+                <th className="px-6 py-4">STATUS</th>
+                <th className="px-6 py-4 text-right">ACTION</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs font-medium">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-400">
+                    Loading repair tickets...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredTickets.map((ticket) => (
-                  <tr key={ticket.id} className="hover:bg-slate-50/80 transition-colors">
-                    
-                    {/* Multi-Photo Thumbnails */}
-                    <td className="p-4">
-                      {ticket.beforePhotos && ticket.beforePhotos.length > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          {ticket.beforePhotos.map((photo, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setSelectedPhoto(photo)}
-                              className="relative group w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100 shrink-0"
-                            >
-                              <img src={photo} alt="Damage" className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                                <FiEye size={12} />
-                              </div>
-                            </button>
-                          ))}
-                          <span className="text-[10px] font-bold text-slate-400">({ticket.beforePhotos.length})</span>
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
-                          <FiCamera size={16} />
-                        </div>
-                      )}
+              ) : filteredRepairs.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-400">
+                    No repair tickets found in MySQL Database. Click "+ New Repair Ticket" to create one.
+                  </td>
+                </tr>
+              ) : (
+                filteredRepairs.map((item) => (
+                  <tr key={item.id || item.ticket_code} className="hover:bg-slate-50/80 transition">
+                    <td className="px-6 py-4 font-mono font-bold text-indigo-600">
+                      #{item.ticket_code || item.id}
                     </td>
 
-                    <td className="p-4">
-                      <div className="font-black text-blue-600">{ticket.id}</div>
-                      <div className="font-bold text-slate-800">{ticket.deviceModel}</div>
-                      <div className="text-[10px] text-slate-400">{ticket.createdDate}</div>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-slate-800">{item.customer_name || item.customerName}</div>
+                      <div className="text-[11px] text-slate-400">{item.customer_phone || item.customerPhone || 'No Phone'}</div>
                     </td>
 
-                    <td className="p-4">
-                      <div className="font-bold text-slate-800">{ticket.customerName}</div>
-                      <div className="text-slate-500 text-xs">{ticket.customerPhone || 'N/A'}</div>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-slate-800">{item.device_name || item.deviceModel}</div>
+                      <div className="text-[11px] text-slate-500 max-w-xs truncate">
+                        {item.problem_description || item.problemDescription || 'No description'}
+                      </div>
                     </td>
 
-                    <td className="p-4 text-slate-600 max-w-xs truncate">
-                      {ticket.problemDescription || 'No description provided'}
+                    <td className="px-6 py-4 font-bold text-slate-900">
+                      ${Number(item.estimated_cost || item.estimatedCost || 0).toFixed(2)}
                     </td>
 
-                    <td className="p-4 font-black text-slate-900">
-                      ${ticket.estimatedCost}
-                    </td>
-
-                    <td className="p-4">
+                    <td className="px-6 py-4">
                       <select
-                        value={ticket.status}
-                        onChange={(e) => handleStatusChange(ticket.id, e.target.value)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer ${
-                          ticket.status === 'Completed'
+                        value={item.status || 'Pending'}
+                        onChange={(e) => handleStatusChange(item.ticket_code || item.id, e.target.value)}
+                        className={`px-3 py-1 rounded-full text-[11px] font-bold border-0 cursor-pointer ${
+                          item.status === 'Completed'
                             ? 'bg-emerald-100 text-emerald-700'
-                            : ticket.status === 'In Progress'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-amber-100 text-amber-700'
+                            : item.status === 'In Progress'
+                            ? 'bg-amber-100 text-amber-700'
+                            : item.status === 'Cancelled'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'bg-slate-100 text-slate-700'
                         }`}
                       >
                         <option value="Pending">Pending</option>
                         <option value="In Progress">In Progress</option>
                         <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
                       </select>
                     </td>
 
-                    <td className="p-4 text-center">
-                      {ticket.beforePhotos && ticket.beforePhotos.length > 0 && (
-                        <button
-                          onClick={() => setSelectedPhoto(ticket.beforePhotos[0])}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 mx-auto"
-                        >
-                          <FiEye size={14} />
-                          <span>Inspect ({ticket.beforePhotos.length})</span>
-                        </button>
-                      )}
+                    <td className="px-6 py-4 text-right">
+                      <span className="text-[11px] text-slate-400">
+                        Tech: {item.technician_name || item.technicianName || 'Admin'}
+                      </span>
                     </td>
-
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* CREATE NEW REPAIR TICKET MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 border border-slate-200">
-            <div className="flex items-center justify-between border-b pb-4 mb-4">
-              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <FiTool className="text-blue-600" />
-                <span>Register New Repair Ticket</span>
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
-                <FiX size={20} />
+      {/* Modal Add Repair Ticket (ជាមួយប្រអប់ Upload រូបថត) */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-150">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-black text-slate-800 text-sm flex items-center gap-2">
+                <FiTool className="text-indigo-600" />
+                <span>New Repair Ticket</span>
+              </h3>
+              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <FiX size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Customer Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    placeholder="e.g. Sok Kim"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Customer Phone</label>
-                  <input
-                    type="text"
-                    value={formData.customerPhone}
-                    onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    placeholder="012 345 678"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Device Model *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.deviceModel}
-                    onChange={(e) => setFormData({ ...formData, deviceModel: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    placeholder="e.g. iPhone 15 Pro Max"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Estimated Cost ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.estimatedCost}
-                    onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    placeholder="45.00"
-                  />
-                </div>
-              </div>
-
+            <form onSubmit={handleSubmit} className="p-6 space-y-3.5 max-h-[85vh] overflow-y-auto">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Problem Description</label>
-                <textarea
-                  rows="3"
-                  value={formData.problemDescription}
-                  onChange={(e) => setFormData({ ...formData, problemDescription: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="e.g. Cracked front screen, battery draining rapidly..."
+                <label className="block text-xs font-bold text-slate-700 mb-1">Ticket Code</label>
+                <input
+                  type="text"
+                  disabled
+                  value={form.ticket_code}
+                  className="w-full px-3.5 py-2 border bg-slate-50 border-slate-200 rounded-xl text-xs font-mono font-bold text-indigo-600"
                 />
               </div>
 
-              {/* MULTI-PHOTO UPLOAD INPUT */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Upload Multiple Damage Photos (Before Repair)
-                </label>
-                <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-3 cursor-pointer bg-slate-50 hover:bg-blue-50/50 transition-colors">
-                  <FiCamera className="text-blue-600" size={18} />
-                  <span className="text-xs font-bold text-slate-600">Select Multiple Photos</span>
-                  <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                </label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Customer Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Sok Chea"
+                  value={form.customer_name}
+                  onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
 
-                {formData.beforePhotos.length > 0 && (
-                  <div className="mt-3 grid grid-cols-4 gap-2">
-                    {formData.beforePhotos.map((photo, idx) => (
-                      <div key={idx} className="relative h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
-                        <img src={photo} alt="Preview" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removePhoto(idx)}
-                          className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 shadow-md hover:bg-rose-700"
-                        >
-                          <FiX size={12} />
-                        </button>
-                      </div>
-                    ))}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Customer Phone</label>
+                <input
+                  type="text"
+                  placeholder="012 345 678"
+                  value={form.customer_phone}
+                  onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Device Name / Model *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. iPhone 13 Pro (Broken Screen)"
+                  value={form.device_name}
+                  onChange={(e) => setForm({ ...form, device_name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Problem Description</label>
+                <textarea
+                  rows="2"
+                  placeholder="Screen cracked, battery replacement..."
+                  value={form.problem_description}
+                  onChange={(e) => setForm({ ...form, problem_description: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                ></textarea>
+              </div>
+
+              {/* 📸 ប្រអប់ថត / បញ្ចូលរូបថតស្ថានភាពខូចខាត (Damage Image) */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <FiCamera className="text-indigo-600" /> Photo / Damage Image (រូបថតមុនជួសជុល)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
+                />
+                {imagePreview && (
+                  <div className="mt-2 relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                    <img src={imagePreview} alt="Damage Preview" className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Estimated Cost ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="e.g. 45.00"
+                  value={form.estimated_cost}
+                  onChange={(e) => setForm({ ...form, estimated_cost: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                  onClick={() => setModalOpen(false)}
+                  className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md"
+                  disabled={submitting}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition"
                 >
-                  Save Ticket
+                  {submitting ? 'Saving...' : 'Save Ticket'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* FULL-SIZE PHOTO INSPECTION MODAL */}
-      {selectedPhoto && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-4 relative shadow-2xl">
-            <button
-              onClick={() => setSelectedPhoto(null)}
-              className="absolute top-4 right-4 bg-slate-800 text-white p-2 rounded-full hover:bg-slate-700 transition-colors"
-            >
-              <FiX size={20} />
-            </button>
-            <h3 className="text-sm font-bold text-slate-800 mb-3 px-2">Initial Device Damage Condition</h3>
-            <div className="max-h-[75vh] rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center">
-              <img src={selectedPhoto} alt="Device Damage Inspection" className="max-h-[75vh] object-contain" />
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

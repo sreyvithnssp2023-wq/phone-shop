@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // ⚙️ API Base URL សម្រាប់ XAMPP Apache Direct
-const API_BASE = 'http://localhost/phone-shop/Backend/public/api';
+const API_BASE = 'http://localhost/phone-shop/phone-shop/Backend/public/api';
 
 const API_PRODUCTS = `${API_BASE}/products`;
 const API_SALES    = `${API_BASE}/sales`;
@@ -24,6 +24,9 @@ export default function PosSale() {
   const [loading, setLoading] = useState(false);
   const [failedImages, setFailedImages] = useState({});
   const [showQrModal, setShowQrModal] = useState(false);
+
+  // 🧾 State សម្រាប់ផ្ទុកទិន្នន័យ Invoice ពេលទិញរួចដើម្បីបង្ហាញ Pop-up
+  const [completedSale, setCompletedSale] = useState(null);
 
   // 🔔 1. Function បាញ់ Notification ទៅកាន់ LocalStorage + Event
   const triggerNotification = (newNotif) => {
@@ -57,9 +60,7 @@ export default function PosSale() {
       const stock = Number(prod.stock_qty ?? prod.stock ?? prod.quantity ?? 0);
       const prodName = prod.product_name || prod.name;
 
-      // ប្រសិនបើស្តុកនៅសល់ចន្លោះពី 1 ដល់ 5
       if (stock > 0 && stock <= 5) {
-        // ពិនិត្យកុំឱ្យបាញ់ Notification ស្ទួនគ្នាលើផលិតផលដដែល
         const isAlreadyExist = existing.some(
           (n) => n.type === 'stock' && n.message.includes(prodName)
         );
@@ -167,7 +168,7 @@ export default function PosSale() {
   const totalAmount = cart.reduce((sum, item) => sum + Number(item.price || 0) * item.qty, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
 
-  // 💳 3. មុខងារ Checkout គិតលុយ (បាញ់ Notification ភ្លាមៗ ទាំងការបង់ប្រាក់ និងស្តុកទំនិញ)
+  // 💳 3. មុខងារ Checkout គិតលុយ
   const handleCheckout = async (paymentMethod) => {
     if (cart.length === 0) {
       alert('សូមជ្រើសរើសទំនិញចូល Cart ជាមុនសិន!');
@@ -185,22 +186,34 @@ export default function PosSale() {
       minute: '2-digit',
       hour12: true,
     });
-    const invoiceNo = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
+    const invoiceNo = `INV-${Math.floor(10000 + Math.random() * 90000)}`;
 
-    // 🟢 1. បាញ់ Notification ការលក់/បង់ប្រាក់ (POS Sale Alert) ភ្លាមៗ
+    // រៀបចំបញ្ជីទំនិញលម្អិតទុកបង្ហាញក្នុង Invoice Modal
+    const purchasedItems = cart.map((item) => ({
+      name: item.product_name || item.name,
+      qty: item.qty,
+      price: Number(item.price || 0),
+      subtotal: Number(item.price || 0) * item.qty,
+    }));
+
+    const finalCustomerName = customerName || 'POS Customer';
+    const finalCustomerPhone = customerPhone || 'N/A';
+    const finalTotal = totalAmount;
+
+    // 🟢 1. បាញ់ Notification ការលក់/បង់ប្រាក់
     triggerNotification({
       id: Date.now(),
       type: 'sale',
       title: 'ការទូទាត់ប្រាក់ជោគជ័យ (POS Sale)',
       message: `បានលក់ទំនិញសរុប ${totalItems} មុខ (${paymentMethod}) - វិក្កយបត្រ #${invoiceNo}`,
-      amount: `$${totalAmount.toFixed(2)}`,
-      cashier: customerName || 'Admin (Chork)',
+      amount: `$${finalTotal.toFixed(2)}`,
+      cashier: finalCustomerName,
       time: 'ទើបតែឥឡូវ',
       date: dateStr,
       isRead: false,
     });
 
-    // 🟡 2. ពិនិត្យស្តុកទំនិញក្នុង Cart ៖ ប្រសិនបើទិញរួចនៅសល់ស្តុក <= 5 គ្រឿង បាញ់ Low Stock Alert ភ្លាមៗ
+    // 🟡 2. Low Stock Alert
     cart.forEach((item) => {
       const stock = Number(item.stock_qty ?? item.stock ?? item.quantity ?? 0);
       const remainingStock = stock - item.qty;
@@ -223,9 +236,10 @@ export default function PosSale() {
     // 3. ផ្ញើទិន្នន័យទៅកាន់ Backend Database
     try {
       const payload = {
-        total_amount: totalAmount,
+        invoice_no: invoiceNo,
+        total_amount: finalTotal,
         payment_method: paymentMethod,
-        customer_name: customerName || 'POS Customer',
+        customer_name: finalCustomerName,
         customer_phone: customerPhone || null,
         items: cart.map((item) => ({
           product_id: item.product_id || item.id,
@@ -238,14 +252,27 @@ export default function PosSale() {
       console.warn('Backend Connection Fail (រក្សាទុកតែ Notification ក្នុង LocalStorage)');
     }
 
-    // 4. បញ្ចប់ប្រតិបត្តិការ និងសម្អាត Form
-    alert(`ទូទាត់ប្រាក់ (${paymentMethod}) ជោគជ័យ!`);
+    // 4. បើក Pop-up Invoice Modal និងសម្អាត Cart Form
     setShowQrModal(false);
+    setCompletedSale({
+      invoice_no: invoiceNo,
+      customer_name: finalCustomerName,
+      customer_phone: finalCustomerPhone,
+      payment_method: paymentMethod,
+      total_amount: finalTotal,
+      date: dateStr,
+      items: purchasedItems,
+    });
+
     setCart([]);
     setCustomerName('');
     setCustomerPhone('');
     setLoading(false);
     fetchProducts();
+  };
+
+  const handlePrintReceipt = () => {
+    window.print();
   };
 
   const filteredProducts = products.filter((p) =>
@@ -254,6 +281,24 @@ export default function PosSale() {
 
   return (
     <div className="flex gap-6 p-6 min-h-screen bg-slate-50 relative font-sans select-none">
+      {/* 🖨️ CSS សម្រាប់ Print តែស្លឹកវិក្កយបត្រ Invoice */}
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          .printable-invoice, .printable-invoice * { visibility: visible !important; }
+          .printable-invoice {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 10px !important;
+          }
+          .no-print-btn { display: none !important; }
+        }
+      `}</style>
+
       {/* ផ្នែកខាងឆ្វេង៖ បញ្ជីទំនិញ */}
       <div className="flex-1">
         <div className="flex items-center justify-between mb-4">
@@ -446,6 +491,97 @@ export default function PosSale() {
                 {loading ? 'Processing...' : '✓ បង់រួចរាល់'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🧾 POP-UP INVOICE RECEIPT MODAL (បង្ហាញភ្លាមៗពេលទិញរួច) */}
+      {completedSale && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            
+            {/* Header Controls */}
+            <div className="flex justify-between items-center no-print-btn">
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                ✓ ការទូទាត់ប្រាក់ជោគជ័យ
+              </span>
+              <button
+                onClick={() => setCompletedSale(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full bg-slate-100 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* សន្លឹកវិក្កយបត្រ (Printable Area) */}
+            <div className="printable-invoice bg-white p-4 border border-slate-200 rounded-2xl space-y-3 text-slate-800 text-xs">
+              <div className="text-center border-b pb-3">
+                <h2 className="text-lg font-black uppercase text-slate-900">ANGKOR-ELECTRONIC</h2>
+                <p className="text-[10px] text-slate-500 font-semibold">Phone Shop & Management System</p>
+                <p className="text-[10px] text-slate-400">Tel: 012 345 678 | Date: {completedSale.date}</p>
+              </div>
+
+              <div className="flex justify-between text-[11px] font-medium border-b pb-2">
+                <div>
+                  <p className="text-slate-500">Invoice No: <strong className="text-indigo-600">#{completedSale.invoice_no}</strong></p>
+                  <p className="text-slate-500">Customer: <strong>{completedSale.customer_name}</strong></p>
+                </div>
+                <div className="text-right">
+                  <p className="text-slate-500">Payment: <strong>{completedSale.payment_method}</strong></p>
+                  <p className="text-slate-500">Phone: <strong>{completedSale.customer_phone}</strong></p>
+                </div>
+              </div>
+
+              {/* បញ្ជីទំនិញលម្អិត (Purchased Items Table) */}
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b text-[10px] uppercase font-bold text-slate-500">
+                    <th className="py-1">Item</th>
+                    <th className="py-1 text-center">Qty</th>
+                    <th className="py-1 text-right">Price</th>
+                    <th className="py-1 text-right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-[11px]">
+                  {completedSale.items.map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="py-1.5 font-bold text-slate-800">{item.name}</td>
+                      <td className="py-1.5 text-center font-semibold">{item.qty}</td>
+                      <td className="py-1.5 text-right text-slate-600">${item.price.toFixed(2)}</td>
+                      <td className="py-1.5 text-right font-black text-slate-900">${item.subtotal.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="border-t pt-2 flex justify-between items-center text-sm font-black">
+                <span>Grand Total:</span>
+                <span className="text-indigo-600">${completedSale.total_amount.toFixed(2)}</span>
+              </div>
+
+              <div className="text-center text-[9px] text-slate-400 pt-2 border-t">
+                <p>Thank you for shopping with Angkor-Electronic!</p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 no-print-btn pt-2">
+              <button
+                type="button"
+                onClick={() => setCompletedSale(null)}
+                className="w-1/2 py-2.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+              >
+                បិទ (Close)
+              </button>
+              <button
+                type="button"
+                onClick={handlePrintReceipt}
+                className="w-1/2 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-md shadow-indigo-200"
+              >
+                🖨️ បោះពុម្ព (Print Receipt)
+              </button>
+            </div>
+
           </div>
         </div>
       )}

@@ -11,10 +11,10 @@ import {
   FiUser,
   FiTrash2,
   FiEdit3,
-  FiShield, // 👈 Import Icon ការធានា
+  FiShield,
 } from 'react-icons/fi';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1/phone-shop/Backend/public/api';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
 
 export default function Suppliers() {
   const [activeTab, setActiveTab] = useState('suppliers'); // 'suppliers' or 'add-product'
@@ -33,7 +33,7 @@ export default function Suppliers() {
   const [editSupplierId, setEditSupplierId] = useState(null);
   const [submittingSupplier, setSubmittingSupplier] = useState(false);
 
-  // Comprehensive Add Product Form State
+  // Add Product Form State
   const [productForm, setProductForm] = useState({
     name: '',
     sku: '',
@@ -42,28 +42,34 @@ export default function Suppliers() {
     cost_price: '',
     price: '',
     stock: '',
-    warranty_months: '12', // 👈 បន្ថែមរយៈពេលធានា (Default 12 ខែ)
+    warranty_months: '12',
     description: '',
     image: null,
   });
   const [submittingProduct, setSubmittingProduct] = useState(false);
 
+  // 1. Fetch Suppliers
   const fetchSuppliers = async () => {
     try {
       const res = await axios.get(`${API_BASE}/suppliers`);
-      setSuppliers(Array.isArray(res.data) ? res.data : []);
+      const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      setSuppliers(list);
     } catch (err) {
       console.error('Error fetching suppliers:', err);
+      toast.error('មិនអាចទាញយកទិន្នន័យ Suppliers បានទេ!');
     }
   };
 
+  // 2. Fetch Categories (with LocalStorage Fallback)
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API_BASE}/categories`);
-      const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       setCategories(list);
     } catch (err) {
-      console.error('Error fetching categories:', err);
+      console.error('Error fetching categories from API, using LocalStorage...', err);
+      const localCats = JSON.parse(localStorage.getItem('pos_categories') || '[]');
+      setCategories(localCats);
     }
   };
 
@@ -106,9 +112,9 @@ export default function Suppliers() {
   const handleEditSupplier = (sup) => {
     setEditSupplierId(sup.id);
     setSupplierForm({
-      name: sup.name || '',
+      name: sup.name || sup.company_name || '',
       contact_person: sup.contact_person || '',
-      phone: sup.phone || '',
+      phone: sup.phone || sup.phone_number || '',
       email: sup.email || '',
       address: sup.address || '',
     });
@@ -125,33 +131,61 @@ export default function Suppliers() {
     }
   };
 
-  // Submit Comprehensive Product
+  // Submit Product with Mandatory Category Validation & Dual Storage Sync
   const handleProductSubmit = async (e) => {
     e.preventDefault();
+
     if (!productForm.name || !productForm.price || !productForm.stock) {
       toast.error('សូមបញ្ចូលឈ្មោះ តម្លៃ និងចំនួនស្តុក!');
       return;
     }
+
+    if (!productForm.category_id) {
+      toast.error('សូមជ្រើសរើស Category ជាមុនសិន!');
+      return;
+    }
+
+    // Find selected category object to send both ID and Name
+    const selectedCat = categories.find((c) => String(c.id) === String(productForm.category_id));
+    const categoryName = selectedCat ? (selectedCat.name || selectedCat.title) : '';
 
     setSubmittingProduct(true);
     try {
       const formData = new FormData();
       formData.append('name', productForm.name);
       formData.append('sku', productForm.sku || '');
-      formData.append('category_id', productForm.category_id || '');
+      formData.append('category_id', productForm.category_id);
+      formData.append('category', categoryName); // Sends category name string
       formData.append('supplier_id', productForm.supplier_id || '');
       formData.append('cost_price', productForm.cost_price || 0);
       formData.append('price', productForm.price);
       formData.append('stock', productForm.stock);
-      formData.append('warranty_months', productForm.warranty_months || 12); // 👈 បាញ់ទិន្នន័យរយៈពេលធានាទៅ Backend
+      formData.append('warranty_months', productForm.warranty_months || 12);
       formData.append('description', productForm.description || '');
       if (productForm.image) {
         formData.append('image', productForm.image);
       }
 
+      // Send to Backend MySQL
       await axios.post(`${API_BASE}/products/full-add`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
+      // Sync with LocalStorage for offline/local views
+      const existingProds = JSON.parse(localStorage.getItem('pos_products') || '[]');
+      const newLocalProd = {
+        id: Date.now(),
+        name: productForm.name,
+        sku: productForm.sku,
+        category_id: productForm.category_id,
+        category: categoryName,
+        supplier_id: productForm.supplier_id,
+        price: parseFloat(productForm.price),
+        cost_price: parseFloat(productForm.cost_price || 0),
+        stock: parseInt(productForm.stock, 10),
+        warranty_months: productForm.warranty_months,
+      };
+      localStorage.setItem('pos_products', JSON.stringify([...existingProds, newLocalProd]));
 
       toast.success('🎉 បានបន្ថែមទំនិញ និងបង្កើតការធានាដោយជោគជ័យ!');
       setProductForm({
@@ -174,7 +208,7 @@ export default function Suppliers() {
   };
 
   return (
-    <div className="p-2">
+    <div className="p-2 select-none font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Suppliers & Stock Management</h1>
@@ -218,7 +252,7 @@ export default function Suppliers() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Angkor Electronics Supplier Co."
+                    placeholder="Angkor Electronics Supplier Co."
                     value={supplierForm.name}
                     onChange={(e) => setSupplierForm({ ...supplierForm, name: e.target.value })}
                     className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500"
@@ -232,7 +266,7 @@ export default function Suppliers() {
                   <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
                   <input
                     type="text"
-                    placeholder="e.g. Mr. Sokha"
+                    placeholder="Username"
                     value={supplierForm.contact_person}
                     onChange={(e) => setSupplierForm({ ...supplierForm, contact_person: e.target.value })}
                     className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500"
@@ -332,11 +366,11 @@ export default function Suppliers() {
                   {suppliers.map((sup) => (
                     <tr key={sup.id} className="hover:bg-slate-50 transition">
                       <td className="px-5 py-3.5 font-bold text-slate-800">
-                        {sup.name}
+                        {sup.name || sup.company_name}
                         {sup.contact_person && <div className="text-[11px] font-medium text-slate-400">👤 {sup.contact_person}</div>}
                       </td>
                       <td className="px-5 py-3.5 text-slate-600">
-                        {sup.phone || 'N/A'}
+                        {sup.phone || sup.phone_number || 'N/A'}
                         {sup.email && <div className="text-[11px] text-slate-400">{sup.email}</div>}
                       </td>
                       <td className="px-5 py-3.5 text-slate-500 max-w-xs truncate">{sup.address || 'N/A'}</td>
@@ -399,8 +433,9 @@ export default function Suppliers() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Category *</label>
                 <select
+                  required
                   value={productForm.category_id}
                   onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500"
@@ -408,7 +443,7 @@ export default function Suppliers() {
                   <option value="">-- Select Category --</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                      {cat.name || cat.title}
                     </option>
                   ))}
                 </select>
@@ -424,21 +459,20 @@ export default function Suppliers() {
                   <option value="">-- Select Supplier --</option>
                   {suppliers.map((sup) => (
                     <option key={sup.id} value={sup.id}>
-                      {sup.name}
+                      {sup.name || sup.company_name}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {/* 🛡️ ប្រអប់បញ្ចូល តម្លៃ, ស្តុក, និង រយៈពេលធានា */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Cost Price ($)</label>
                 <input
                   type="number"
                   step="0.01"
-                  placeholder="e.g. 950.00"
+                  placeholder=""
                   value={productForm.cost_price}
                   onChange={(e) => setProductForm({ ...productForm, cost_price: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500"
@@ -451,7 +485,7 @@ export default function Suppliers() {
                   type="number"
                   step="0.01"
                   required
-                  placeholder="e.g. 1199.00"
+                  placeholder=""
                   value={productForm.price}
                   onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500"
@@ -463,14 +497,13 @@ export default function Suppliers() {
                 <input
                   type="number"
                   required
-                  placeholder="e.g. 25"
+                  placeholder=""
                   value={productForm.stock}
                   onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
 
-              {/* 🛡️ Field ថ្មី ៖ រយៈពេលធានា (ខែ) */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
                   <FiShield className="text-indigo-600" /> រយៈពេលធានា (គិតជាខែ) *
@@ -479,7 +512,7 @@ export default function Suppliers() {
                   type="number"
                   min="0"
                   required
-                  placeholder="e.g. 12"
+                  placeholder="3 / 6 / 12"
                   value={productForm.warranty_months}
                   onChange={(e) => setProductForm({ ...productForm, warranty_months: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500"
