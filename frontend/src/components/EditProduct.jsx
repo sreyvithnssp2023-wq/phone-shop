@@ -4,8 +4,9 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FiArrowLeft, FiSave } from 'react-icons/fi';
 
-const API_URL = 'http://localhost/phone-shop/phone-shop/Backend/public/api/products';
-const IMAGE_BASE_URL = 'http://localhost/phone-shop/phone-shop/Backend/public/';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+const API_URL = `${API_BASE}/products`;
+const IMAGE_BASE_URL = API_BASE.replace(/\/api\/?$/, '/');
 
 export default function EditProduct() {
   const { id } = useParams();
@@ -17,6 +18,7 @@ export default function EditProduct() {
 
   const [formData, setFormData] = useState({
     product_name: '',
+    category: 'iOS',
     price: '',
     stock_qty: '',
     status: 'Active',
@@ -31,10 +33,12 @@ export default function EditProduct() {
         const res = await axios.get(`${API_URL}/${id}`);
         const data = res.data.data || res.data;
 
+        const rawStock = Number(data.stock_qty !== undefined ? data.stock_qty : (data.quantity || data.stock || 0));
         setFormData({
           product_name: data.product_name || data.name || '',
+          category: data.category || data.category_name || 'iOS',
           price: data.price || '',
-          stock_qty: data.stock_qty !== undefined ? data.stock_qty : (data.quantity || 0),
+          stock_qty: Math.min(30, Math.max(0, rawStock)),
           status: data.status || 'Active',
           image: null,
         });
@@ -66,8 +70,9 @@ export default function EditProduct() {
       const data = new FormData();
       data.append('_method', 'PUT'); // Laravel Requirement ពេលប្រើ Multipart Form
       data.append('product_name', formData.product_name);
+      data.append('category', formData.category || 'iOS');
       data.append('price', formData.price);
-      data.append('stock_qty', formData.stock_qty);
+      data.append('stock_qty', Math.min(30, Math.max(0, Number(formData.stock_qty || 0))));
       data.append('status', formData.status);
 
       if (formData.image) {
@@ -93,7 +98,7 @@ export default function EditProduct() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div className="max-w-2xl mx-auto p-3 sm:p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link
           to="/products"
@@ -101,10 +106,10 @@ export default function EditProduct() {
         >
           <FiArrowLeft size={20} />
         </Link>
-        <h1 className="text-2xl font-bold text-slate-800">Edit Product #{id}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Edit Product #{id}</h1>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border p-6">
+      <div className="bg-white rounded-2xl shadow-sm border p-4 sm:p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
@@ -119,7 +124,26 @@ export default function EditProduct() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* 🟢 Category Selection */}
+          <div>
+            <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+              Category (Relationship)
+            </label>
+            <select
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="w-full p-3 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-medium"
+            >
+              <option value="iOS">iOS (Apple, iPhone)</option>
+              <option value="Android">Android (Samsung, etc.)</option>
+              <option value="Accessories">Accessories (Case, Charger, Watch)</option>
+              <option value="Tablets">Tablets (iPad)</option>
+              <option value="Laptops">Laptops</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
                 Price ($)
@@ -135,15 +159,21 @@ export default function EditProduct() {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
-                Stock Qty
+                Stock Qty (Max 30)
               </label>
               <input
                 type="number"
+                min="0"
+                max={30}
                 value={formData.stock_qty}
-                onChange={(e) => setFormData({ ...formData, stock_qty: e.target.value })}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setFormData({ ...formData, stock_qty: val > 30 ? 30 : val });
+                }}
                 className="w-full p-3 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 required
               />
+              <span className="text-[10px] text-slate-400 mt-1 block">Full Stock អតិបរមាត្រឹម 30 គ្រឿង</span>
             </div>
           </div>
 

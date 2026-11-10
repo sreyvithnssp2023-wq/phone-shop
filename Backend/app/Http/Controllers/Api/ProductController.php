@@ -33,7 +33,9 @@ class ProductController extends Controller
                 ->get()
                 ->map(function ($p) {
                     $pName      = $p->name ?? $p->product_name ?? '';
-                    $stockQty   = $p->stock ?? $p->stock_qty ?? 0;
+                    $rawStock   = (int) ($p->stock ?? $p->stock_qty ?? 0);
+                    // 🟢 ចំនួនស្តុក Full Stock អតិបរមាត្រឹមតែ 30 គ្រឿង
+                    $stockQty   = min(30, max(0, $rawStock));
                     $barcodeVal = $p->barcode ?? $p->sku ?? 'N/A';
                     $catVal     = $p->category ?? $p->category_id ?? 'General';
                     $warranty   = (int) ($p->warranty_months ?? $p->warranty ?? 0);
@@ -44,14 +46,17 @@ class ProductController extends Controller
                         'product_name'    => $pName,
                         'title'           => $pName,
                         'category'        => $catVal,
+                        'category_name'   => $catVal,
                         'sku'             => $barcodeVal,
                         'barcode'         => $barcodeVal,
                         'price'           => (float) ($p->price ?? 0),
                         'cost'            => (float) ($p->cost ?? 0),
                         'stock'           => (int) $stockQty,
                         'stock_qty'       => (int) $stockQty,
+                        'max_stock'       => 30,
+                        'is_full_stock'   => $stockQty >= 30,
                         'warranty_months' => $warranty,
-                        'status'          => $stockQty > 0 ? 'In Stock' : 'Out of Stock',
+                        'status'          => $stockQty >= 30 ? 'Full Stock' : ($stockQty > 0 ? 'In Stock' : 'Out of Stock'),
                         'image'           => $p->image ?? null,
                         'created_at'      => $p->created_at ?? null,
                         'updated_at'      => $p->updated_at ?? null,
@@ -107,8 +112,8 @@ class ProductController extends Controller
                 $data['price'] = $request->price ?? 0;
             }
 
-            // ចំនួនស្តុក
-            $stockVal = $request->stock_qty ?? $request->stock ?? 0;
+            // ចំនួនស្តុក (Full Stock អតិបរមាត្រឹម 30 គ្រឿង)
+            $stockVal = min(30, max(0, (int) ($request->stock_qty ?? $request->stock ?? 0)));
             if (in_array('stock', $cols)) {
                 $data['stock'] = $stockVal;
             } elseif (in_array('stock_qty', $cols)) {
@@ -226,8 +231,9 @@ class ProductController extends Controller
 
             $stockVal = $request->stock_qty ?? $request->stock;
             if ($stockVal !== null) {
-                if (in_array('stock', $cols)) $data['stock'] = $stockVal;
-                if (in_array('stock_qty', $cols)) $data['stock_qty'] = $stockVal;
+                $cappedStock = min(30, max(0, (int) $stockVal));
+                if (in_array('stock', $cols)) $data['stock'] = $cappedStock;
+                if (in_array('stock_qty', $cols)) $data['stock_qty'] = $cappedStock;
             }
 
             $warrantyVal = $request->warranty_months ?? $request->warranty;

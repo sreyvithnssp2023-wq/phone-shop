@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { FiUser, FiShield, FiKey } from 'react-icons/fi';
 
 // 🟢 កំណត់ Base URL រត់តាម XAMPP Apache Backend
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
 
 export default function Profile({ user }) {
   const [passForm, setPassForm] = useState({
@@ -67,10 +67,10 @@ export default function Profile({ user }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         
         {/* Profile Details Card */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
           <h2 className="text-sm font-bold text-slate-800 border-b pb-3 flex items-center gap-2">
             <FiShield className="text-blue-600" />
             <span>Account Information</span>
@@ -99,7 +99,7 @@ export default function Profile({ user }) {
         </div>
 
         {/* Change Password Card */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <h2 className="text-sm font-bold text-slate-800 border-b pb-3 flex items-center gap-2 mb-4">
             <FiKey className="text-blue-600" />
             <span>Change Password</span>

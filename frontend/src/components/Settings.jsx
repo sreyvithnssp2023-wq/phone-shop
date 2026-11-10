@@ -197,11 +197,11 @@ export default function Settings({ user }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       
       {/* Header */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-        <h1 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3">
           <FiSettings className="text-blue-600" />
           <span>System Settings & Configuration</span>
         </h1>
@@ -211,10 +211,10 @@ export default function Settings({ user }) {
       </div>
 
       {/* Grid Layout Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
         {/* CARD 1: SHOP INFORMATION */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-6">
           <div>
             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
@@ -299,7 +299,7 @@ export default function Settings({ user }) {
         </div>
 
         {/* CARD 2: BUSINESS HOURS */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-6">
           <div>
             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
@@ -313,10 +313,10 @@ export default function Settings({ user }) {
 
             <form id="hours-form" onSubmit={handleSaveHours} className="space-y-3 mt-5">
               {businessHours.map((item, idx) => (
-                <div key={item.day} className="flex items-center justify-between text-xs py-1 border-b border-slate-50 last:border-0">
-                  <span className="font-bold text-slate-700 w-24">{item.day}</span>
+                <div key={item.day} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-50 last:border-0 gap-2">
+                  <span className="font-bold text-slate-700 w-20 sm:w-24 text-[11px] sm:text-xs truncate">{item.day}</span>
                   
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                     <input
                       type="text"
                       disabled={!item.active}
@@ -326,7 +326,7 @@ export default function Settings({ user }) {
                         updated[idx].open = e.target.value;
                         setBusinessHours(updated);
                       }}
-                      className="w-16 border border-slate-200 rounded-lg px-1.5 py-1 text-center font-medium disabled:bg-slate-100 disabled:text-slate-400"
+                      className="w-14 sm:w-16 border border-slate-200 rounded-lg px-1 py-1 text-center font-medium text-[11px] disabled:bg-slate-100 disabled:text-slate-400"
                     />
                     <span>-</span>
                     <input
@@ -338,14 +338,14 @@ export default function Settings({ user }) {
                         updated[idx].close = e.target.value;
                         setBusinessHours(updated);
                       }}
-                      className="w-16 border border-slate-200 rounded-lg px-1.5 py-1 text-center font-medium disabled:bg-slate-100 disabled:text-slate-400"
+                      className="w-14 sm:w-16 border border-slate-200 rounded-lg px-1 py-1 text-center font-medium text-[11px] disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleToggleDay(idx)}
-                    className={`w-9 h-5 rounded-full transition-colors p-0.5 relative ${
+                    className={`w-9 h-5 rounded-full transition-colors p-0.5 relative shrink-0 ${
                       item.active ? 'bg-blue-600' : 'bg-slate-300'
                     }`}
                   >
@@ -369,7 +369,7 @@ export default function Settings({ user }) {
         </div>
 
         {/* CARD 3: PRICING CONFIGURATION */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-6">
           <div>
             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
               <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
@@ -389,16 +389,16 @@ export default function Settings({ user }) {
               </div>
 
               {servicePrices.map((serv) => (
-                <div key={serv.id} className="grid grid-cols-12 items-center text-xs py-1 border-b border-slate-50 last:border-0">
-                  <span className="col-span-6 font-bold text-slate-800 truncate pr-2">{serv.service}</span>
-                  <span className="col-span-3 text-[10px] font-medium text-slate-400 text-center">{serv.unit}</span>
+                <div key={serv.id} className="grid grid-cols-12 items-center text-xs py-1 border-b border-slate-50 last:border-0 gap-1">
+                  <span className="col-span-6 font-bold text-slate-800 truncate pr-1">{serv.service}</span>
+                  <span className="col-span-3 text-[10px] font-medium text-slate-400 text-center truncate">{serv.unit}</span>
                   <div className="col-span-3 text-right">
                     <input
                       type="number"
                       step="0.01"
                       value={serv.price}
                       onChange={(e) => handlePriceChange(serv.id, e.target.value)}
-                      className="w-16 border border-slate-200 rounded-lg px-1.5 py-1 text-right font-black text-slate-900 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      className="w-14 sm:w-16 border border-slate-200 rounded-lg px-1 py-1 text-right font-black text-slate-900 focus:ring-1 focus:ring-blue-500 focus:outline-none text-[11px] sm:text-xs"
                     />
                   </div>
                 </div>
@@ -419,10 +419,10 @@ export default function Settings({ user }) {
       </div>
 
       {/* ADDITIONAL ROW: DATA BACKUP & NOTIFICATION CONTROLS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         
         {/* CARD 4: DATA BACKUP & RESTORE */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
             <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
               <FiDatabase size={20} />
@@ -455,7 +455,7 @@ export default function Settings({ user }) {
         </div>
 
         {/* CARD 5: NOTIFICATION HISTORY MANAGEMENT */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
             <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
               <FiBell size={20} />

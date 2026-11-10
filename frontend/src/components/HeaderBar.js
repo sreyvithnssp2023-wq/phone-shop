@@ -1,7 +1,8 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { FiMenu } from 'react-icons/fi';
 
-export default function HeaderBar({ currentRole, currentUser }) {
+export default function HeaderBar({ currentRole, currentUser, onToggleMobileMenu }) {
   const location = useLocation();
 
   // 🟢 ផ្គូផ្គងឈ្មោះ Dynamic តាម Admin ទាំង ២ និង Role ផ្សេងៗ
@@ -96,24 +97,36 @@ export default function HeaderBar({ currentRole, currentUser }) {
   const bannerInfo = getPageBannerInfo(location.pathname);
 
   return (
-    <header className="p-6 pb-0">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <span className="bg-white/20 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full border border-white/20 tracking-wider inline-block">
-            {displayRole}
-          </span>
-          <h1 className="text-2xl md:text-3xl font-black mt-2 tracking-tight">
-            {bannerInfo.title}
-          </h1>
-          <p className="text-xs text-blue-100 mt-1 opacity-90 font-medium">
-            {bannerInfo.subtitle}
-          </p>
+    <header className="p-3 sm:p-4 md:p-6 pb-0">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl md:rounded-3xl p-4 sm:p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3 w-full md:w-auto">
+          {onToggleMobileMenu && (
+            <button
+              type="button"
+              onClick={onToggleMobileMenu}
+              className="lg:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 text-white transition shrink-0 mt-1"
+              aria-label="Toggle navigation menu"
+            >
+              <FiMenu size={22} />
+            </button>
+          )}
+          <div className="min-w-0 flex-1">
+            <span className="bg-white/20 text-white text-[10px] sm:text-[11px] font-black uppercase px-2.5 sm:px-3 py-1 rounded-full border border-white/20 tracking-wider inline-block">
+              {displayRole}
+            </span>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black mt-2 tracking-tight break-words">
+              {bannerInfo.title}
+            </h1>
+            <p className="text-xs text-blue-100 mt-1 opacity-90 font-medium">
+              {bannerInfo.subtitle}
+            </p>
+          </div>
         </div>
 
         {bannerInfo.showButton && (
           <Link
             to="/pos"
-            className="bg-white text-blue-600 hover:bg-blue-50 font-black px-5 py-3 rounded-2xl text-xs shadow-md transition-all uppercase tracking-wider shrink-0 flex items-center gap-2"
+            className="w-full md:w-auto justify-center bg-white text-blue-600 hover:bg-blue-50 font-black px-5 py-3 rounded-2xl text-xs shadow-md transition-all uppercase tracking-wider shrink-0 flex items-center gap-2"
           >
             <span>Open POS Terminal</span>
             <span>&rarr;</span>

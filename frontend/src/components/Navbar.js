@@ -21,7 +21,7 @@ import {
 // 🟢 Import រូបភាព Logo ផ្ទាល់ពី Folder src/assets/logo.png
 import logoImg from '../assets/logo.png';
 
-export default function Navbar({ currentRole, setCurrentRole }) {
+export default function Navbar({ currentRole, setCurrentRole, isMobileOpen, onCloseMobile }) {
   const location = useLocation();
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
@@ -102,89 +102,114 @@ export default function Navbar({ currentRole, setCurrentRole }) {
   });
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0 select-none justify-between h-screen sticky top-0">
-      <div>
-        {/* Top Logo / Avatar Section - 🟢 ធ្វើឱ្យ Logo ធំពេញសាច់ស្អាត */}
-        <div className="flex flex-col items-center pt-6 pb-5 px-4 text-center border-b border-slate-800/80">
-          <div className="w-24 h-24 rounded-2xl bg-slate-800/60 shadow-lg flex items-center justify-center overflow-hidden border border-slate-700/60 mb-3 p-1">
-            <img 
-              src={activeLogo} 
-              alt="Shop Logo" 
-              className="w-full h-full object-cover rounded-xl" 
-            />
-          </div>
-          <h2 className="text-white font-black text-base tracking-wide">{shopName}</h2>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">PHONE MANAGEMENT</p>
-        </div>
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={onCloseMobile}
+          aria-label="Close navigation overlay"
+        />
+      )}
 
-        {/* Role Selector Dropdown */}
-        <div className="px-4 py-4 relative border-b border-slate-800/80">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 shrink-0 select-none justify-between h-screen transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+          isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        <div className="relative">
+          {/* Mobile Close Button */}
           <button
-            onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-            className="w-full bg-slate-800/80 hover:bg-slate-800 text-white px-4 py-3 rounded-2xl text-xs font-bold flex items-center justify-between border border-slate-700/60 shadow-sm transition-all"
+            onClick={onCloseMobile}
+            className="lg:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800/80 transition"
+            aria-label="Close menu"
           >
-            <div className="flex items-center gap-2.5 truncate">
-              <FiUser className="text-blue-400 shrink-0" size={16} />
-              <span className="truncate">{currentRole || 'Select Role'}</span>
-            </div>
-            <FiChevronDown className={`transition-transform duration-200 text-slate-400 shrink-0 ${isRoleDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+            <FiX size={18} />
           </button>
 
-          {isRoleDropdownOpen && (
-            <div className="absolute left-4 right-4 mt-2 bg-slate-800 border border-slate-700 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5 backdrop-blur-md">
-              {roles.map((role) => (
-                <button
-                  key={role}
-                  onClick={() => handleRoleClick(role)}
-                  className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between ${
-                    currentRole === role ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-700/60'
+          {/* Top Logo / Avatar Section - 🟢 ធ្វើឱ្យ Logo ធំពេញសាច់ស្អាត */}
+          <div className="flex flex-col items-center pt-6 pb-5 px-4 text-center border-b border-slate-800/80">
+            <div className="w-24 h-24 rounded-2xl bg-slate-800/60 shadow-lg flex items-center justify-center overflow-hidden border border-slate-700/60 mb-3 p-1">
+              <img 
+                src={activeLogo} 
+                alt="Shop Logo" 
+                className="w-full h-full object-cover rounded-xl" 
+              />
+            </div>
+            <h2 className="text-white font-black text-base tracking-wide">{shopName}</h2>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">PHONE MANAGEMENT</p>
+          </div>
+
+          {/* Role Selector Dropdown */}
+          <div className="px-4 py-4 relative border-b border-slate-800/80">
+            <button
+              onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+              className="w-full bg-slate-800/80 hover:bg-slate-800 text-white px-4 py-3 rounded-2xl text-xs font-bold flex items-center justify-between border border-slate-700/60 shadow-sm transition-all"
+            >
+              <div className="flex items-center gap-2.5 truncate">
+                <FiUser className="text-blue-400 shrink-0" size={16} />
+                <span className="truncate">{currentRole || 'Select Role'}</span>
+              </div>
+              <FiChevronDown className={`transition-transform duration-200 text-slate-400 shrink-0 ${isRoleDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+            </button>
+
+            {isRoleDropdownOpen && (
+              <div className="absolute left-4 right-4 mt-2 bg-slate-800 border border-slate-700 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5 backdrop-blur-md">
+                {roles.map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => handleRoleClick(role)}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between ${
+                      currentRole === role ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-700/60'
+                    }`}
+                  >
+                    <span>{role}</span>
+                    {currentRole === role && <span className="w-2 h-2 rounded-full bg-white"></span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Links */}
+          <div className="px-3.5 py-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-360px)]">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => onCloseMobile?.()}
+                  className={`flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/70'
                   }`}
                 >
-                  <span>{role}</span>
-                  {currentRole === role && <span className="w-2 h-2 rounded-full bg-white"></span>}
-                </button>
-              ))}
-            </div>
-          )}
+                  <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400'} />
+                  <span className="tracking-wide text-[13px]">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Navigation Links */}
-        <div className="px-3.5 py-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-360px)]">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-xs font-bold transition-all ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/70'
-                }`}
-              >
-                <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400'} />
-                <span className="tracking-wide text-[13px]">{item.label}</span>
-              </Link>
-            );
-          })}
+        {/* Bottom Logout Button */}
+        <div className="p-4 border-t border-slate-800">
+          <Link
+            to="/logout"
+            onClick={() => onCloseMobile?.()}
+            className="flex items-center justify-center gap-2.5 w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-2xl text-xs shadow-lg shadow-red-600/30 transition-all uppercase tracking-wider"
+          >
+            <FiLogOut size={16} />
+            <span>Logout</span>
+          </Link>
         </div>
-      </div>
 
-      {/* Bottom Logout Button */}
-      <div className="p-4 border-t border-slate-800">
-        <Link
-          to="/logout"
-          className="flex items-center justify-center gap-2.5 w-full bg-red-600 hover:bg-red-700 text-white font-black py-3.5 rounded-2xl text-xs shadow-lg shadow-red-600/30 transition-all uppercase tracking-wider"
-        >
-          <FiLogOut size={16} />
-          <span>Logout</span>
-        </Link>
-      </div>
-
-      {/* Modal Popup វាយ Password ផ្លាស់ប្តូរ Role */}
-      {isPasswordModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        {/* Modal Popup វាយ Password ផ្លាស់ប្តូរ Role */}
+        {isPasswordModalOpen && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-slate-800 border border-slate-700 w-full max-w-xs rounded-3xl p-6 shadow-2xl relative text-center">
             <button
               onClick={() => setIsPasswordModalOpen(false)}
@@ -235,6 +260,7 @@ export default function Navbar({ currentRole, setCurrentRole }) {
           </div>
         </div>
       )}
-    </aside>
+      </aside>
+    </>
   );
 }

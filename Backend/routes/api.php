@@ -17,6 +17,16 @@ use App\Http\Controllers\Api\WarrantyController;
 |--------------------------------------------------------------------------
 */
 
+// 👥 Users Route
+Route::get('/users', function () {
+    try {
+        $users = DB::table('users')->select('id', 'name', 'email', 'role')->get();
+        return response()->json($users, 200);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+});
+
 // 📊 Dashboard Statistics Route
 Route::get('/dashboard', [SaleController::class, 'dashboard']);
 

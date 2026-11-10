@@ -17,16 +17,28 @@ import Login from './components/login';
 import { Toaster } from 'react-hot-toast';
 
 // 🟢 API Endpoint ភ្ជាប់ទៅកាន់ XAMPP Apache Backend
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
 
 // Layout wrapper សម្រាប់ទំព័រដែលមាន Navbar & HeaderBar
 function MainLayout({ currentRole, setCurrentRole, currentUser, children }) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
-      <Navbar currentRole={currentRole} setCurrentRole={setCurrentRole} currentUser={currentUser} />
-      <div className="flex-1 flex flex-col overflow-y-auto">
-        <HeaderBar currentRole={currentRole} currentUser={currentUser} />
-        <main className="p-6 flex-1">
+      <Navbar 
+        currentRole={currentRole} 
+        setCurrentRole={setCurrentRole} 
+        currentUser={currentUser}
+        isMobileOpen={isMobileOpen}
+        onCloseMobile={() => setIsMobileOpen(false)}
+      />
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <HeaderBar 
+          currentRole={currentRole} 
+          currentUser={currentUser}
+          onToggleMobileMenu={() => setIsMobileOpen(!isMobileOpen)}
+        />
+        <main className="p-3 sm:p-4 md:p-6 flex-1 min-w-0">
           {children}
         </main>
       </div>

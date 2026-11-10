@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiBarChart2, FiDownload, FiFileText, FiTrendingUp, FiDollarSign, FiCalendar } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 
-const API_BASE = "http://localhost/phone-shop/phone-shop/Backend/public/api";
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
 
 export default function Reports() {
   const [reportType, setReportType] = useState('sales');
@@ -93,7 +93,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="space-y-6 print:p-0 print:m-0">
+    <div className="space-y-4 sm:space-y-6 print:p-0 print:m-0">
       {/* CSS កំណត់ A4 Portrait Fit មិនឲ្យរើក ឬដាច់គែម */}
       <style>{`
         @page {
@@ -108,7 +108,7 @@ export default function Reports() {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .no-print, nav, sidebar, button { display: none !important; }
+          .no-print, nav, aside, header, sidebar, button { display: none !important; }
           .print-header { display: block !important; }
           .print-summary { display: flex !important; justify-content: space-between !important; margin-bottom: 15px !important; }
           .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
@@ -149,9 +149,9 @@ export default function Reports() {
       </div>
 
       {/* Main Screen Header Card */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 no-print">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3">
             <FiBarChart2 className="text-blue-600" />
             <span>Reports & Analytics</span>
           </h1>
@@ -162,7 +162,7 @@ export default function Reports() {
 
         <button
           onClick={handleExportReport}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md shadow-blue-600/30 transition-all uppercase tracking-wider"
+          className="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md shadow-blue-600/30 transition-all uppercase tracking-wider"
         >
           <FiDownload size={15} />
           <span>EXPORT REPORT</span>
@@ -170,10 +170,10 @@ export default function Reports() {
       </div>
 
       {/* Quick Report Selectors */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 no-print">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 no-print">
         <button
           onClick={() => handleGenerateReport('sales')}
-          className={`p-5 rounded-3xl border text-left transition-all flex items-center justify-between ${
+          className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border text-left transition-all flex items-center justify-between ${
             reportType === 'sales' ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
           }`}
         >
@@ -189,7 +189,7 @@ export default function Reports() {
 
         <button
           onClick={() => handleGenerateReport('repairs')}
-          className={`p-5 rounded-3xl border text-left transition-all flex items-center justify-between ${
+          className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border text-left transition-all flex items-center justify-between ${
             reportType === 'repairs' ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
           }`}
         >
@@ -205,7 +205,7 @@ export default function Reports() {
 
         <button
           onClick={() => handleGenerateReport('inventory')}
-          className={`p-5 rounded-3xl border text-left transition-all flex items-center justify-between ${
+          className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border text-left transition-all flex items-center justify-between sm:col-span-2 lg:col-span-1 ${
             reportType === 'inventory' ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
           }`}
         >
@@ -221,13 +221,13 @@ export default function Reports() {
       </div>
 
       {/* Report Summary & Table Block */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4 print:p-0 print:border-none">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 no-print">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 space-y-4 print:p-0 print:border-none">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100 no-print">
           <div>
-            <h2 className="text-base font-black text-slate-900 uppercase tracking-wide">{reportType} REPORT SUMMARY</h2>
+            <h2 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide">{reportType} REPORT SUMMARY</h2>
             <p className="text-xs text-slate-400 font-semibold">Generated for Angkor-Electronic POS System</p>
           </div>
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl self-start sm:self-auto">
             <FiCalendar size={14} className="text-blue-600" />
             <span>Today's Data</span>
           </div>
@@ -239,7 +239,7 @@ export default function Reports() {
           <div className="overflow-x-auto">
             {/* 1. FINANCIAL / SALES REPORT TABLE */}
             {reportType === 'sales' && (
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[620px] text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 text-xs font-bold uppercase border-b border-slate-200">
                     <th className="p-3 w-1/6">INVOICE #</th>
@@ -287,7 +287,7 @@ export default function Reports() {
 
             {/* 2. TECHNICAL / REPAIR REPORT TABLE */}
             {reportType === 'repairs' && (
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[650px] text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 text-xs font-bold uppercase border-b border-slate-200">
                     <th className="p-3 w-1/6">TICKET CODE</th>
@@ -334,7 +334,7 @@ export default function Reports() {
 
             {/* 3. STOCK / INVENTORY REPORT TABLE */}
             {reportType === 'inventory' && (
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[550px] text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 text-xs font-bold uppercase border-b border-slate-200">
                     <th className="p-3 w-2/5">PRODUCT NAME</th>

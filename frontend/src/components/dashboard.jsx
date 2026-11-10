@@ -32,7 +32,7 @@ ChartJS.register(
 
 const API_BASE =
   process.env.REACT_APP_API_BASE_URL ||
-  'http://localhost/phone-shop/phone-shop/Backend/public/api';
+  'http://localhost/phone-shop/Backend/public/api';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-100 text-amber-700',
@@ -43,12 +43,16 @@ const STATUS_COLORS = {
   cancelled: 'bg-red-100 text-red-700',
 };
 
-function StatCard({ label, value, icon, color }) {
+function StatCard({ label, value, icon, color, loading }) {
   return (
     <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
       <div>
         <p className="text-xs text-slate-400 font-semibold">{label}</p>
-        <p className="text-xl font-bold text-slate-800 mt-1">{value}</p>
+        {loading ? (
+          <div className="h-6 w-16 bg-slate-200 rounded animate-pulse mt-1" />
+        ) : (
+          <p className="text-xl font-bold text-slate-800 mt-1">{value}</p>
+        )}
       </div>
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${color}`}>
         {icon}
@@ -252,9 +256,9 @@ export default function Dashboard({ currentRole, currentUser }) {
   const displayName = currentUser?.name || 'Brovith';
 
   return (
-    <div className="p-2 space-y-6 font-sans select-none">
+    <div className="p-1 sm:p-2 space-y-4 sm:space-y-6 font-sans select-none">
       {/* 🟢 ចាប់ផ្តើមភ្លាមៗពី Dashboard Overview ដោយគ្មាន Banner ពណ៌ខៀវស្ទួន */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-slate-800">Dashboard Overview</h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -263,51 +267,56 @@ export default function Dashboard({ currentRole, currentUser }) {
         </div>
         <button
           onClick={() => alert('Storefront preview coming soon.')}
-          className="bg-white border border-slate-200 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition"
+          className="w-full sm:w-auto bg-white border border-slate-200 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition text-center"
         >
           View my storefront ↗
         </button>
       </div>
 
       {/* Metrics Cards ទាំង ៥ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
           label="Today's Orders"
-          value={loading ? '...' : overview.today_orders}
+          value={overview.today_orders}
+          loading={loading}
           icon={<FiShoppingBag />}
           color="bg-indigo-100 text-indigo-600"
         />
         <StatCard
           label="Today's Revenue"
-          value={loading ? '...' : `$${overview.today_revenue.toFixed(2)}`}
+          value={`$${overview.today_revenue.toFixed(2)}`}
+          loading={loading}
           icon={<FiDollarSign />}
           color="bg-emerald-100 text-emerald-600"
         />
         <StatCard
           label="Total Products"
-          value={loading ? '...' : overview.total_products}
+          value={overview.total_products}
+          loading={loading}
           icon={<FiPackage />}
           color="bg-amber-100 text-amber-600"
         />
         <StatCard
           label="Total Customers"
-          value={loading ? '...' : overview.total_customers}
+          value={overview.total_customers}
+          loading={loading}
           icon={<FiUsers />}
           color="bg-rose-100 text-rose-600"
         />
         <StatCard
           label="Total Revenue"
-          value={loading ? '...' : `$${overview.total_revenue.toFixed(2)}`}
+          value={`$${overview.total_revenue.toFixed(2)}`}
+          loading={loading}
           icon={<FiBox />}
           color="bg-purple-100 text-purple-600"
         />
       </div>
 
       {/* Sales Line Chart */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <h2 className="font-bold text-slate-800">Sales Chart</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {['daily', 'weekly', 'monthly'].map((p) => (
               <button
                 key={p}
@@ -323,7 +332,7 @@ export default function Dashboard({ currentRole, currentUser }) {
             ))}
           </div>
         </div>
-        <div className="h-64">
+        <div className="h-56 sm:h-64 md:h-72 w-full">
           <Line
             key={`${period}-${JSON.stringify(chartData)}`}
             redraw={true}
@@ -335,7 +344,7 @@ export default function Dashboard({ currentRole, currentUser }) {
 
       {/* Recent Orders Table */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
           <h2 className="font-bold text-slate-800">Recent Orders</h2>
           <Link to="/pos" className="text-xs text-indigo-600 hover:underline font-bold">
             Go to POS ➔
@@ -347,32 +356,32 @@ export default function Dashboard({ currentRole, currentUser }) {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs min-w-[520px]">
               <thead>
-                <tr className="bg-slate-50 text-left uppercase text-slate-400 font-bold border-b border-slate-100">
-                  <th className="px-5 py-3">Order</th>
-                  <th className="px-5 py-3">Customer</th>
-                  <th className="px-5 py-3">Total</th>
-                  <th className="px-5 py-3">Payment</th>
-                  <th className="px-5 py-3">Status</th>
+                <tr className="bg-slate-50 text-left uppercase text-slate-400 font-bold border-b border-slate-100 whitespace-nowrap">
+                  <th className="px-4 sm:px-5 py-3">Order</th>
+                  <th className="px-4 sm:px-5 py-3">Customer</th>
+                  <th className="px-4 sm:px-5 py-3">Total</th>
+                  <th className="px-4 sm:px-5 py-3">Payment</th>
+                  <th className="px-4 sm:px-5 py-3">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
                 {overview.recent_orders.map((o) => (
-                  <tr key={o.id} className="hover:bg-slate-50 transition">
-                    <td className="px-5 py-3 font-mono font-bold text-indigo-600">
+                  <tr key={o.id} className="hover:bg-slate-50 transition whitespace-nowrap">
+                    <td className="px-4 sm:px-5 py-3 font-mono font-bold text-indigo-600">
                       #{o.order_number}
                     </td>
-                    <td className="px-5 py-3 text-slate-800 font-bold">{o.customer_name}</td>
-                    <td className="px-5 py-3 font-bold text-slate-900">
+                    <td className="px-4 sm:px-5 py-3 text-slate-800 font-bold">{o.customer_name}</td>
+                    <td className="px-4 sm:px-5 py-3 font-bold text-slate-900">
                       ${o.total.toFixed(2)}
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-4 sm:px-5 py-3">
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
                         {o.payment_status}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-4 sm:px-5 py-3">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold capitalize ${STATUS_COLORS[o.order_status] || STATUS_COLORS.completed}`}>
                         {o.order_status}
                       </span>

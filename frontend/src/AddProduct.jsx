@@ -3,6 +3,7 @@ import axios from 'axios';
 
 export default function AddProduct() {
   const [productName, setProductName] = useState('');
+  const [category, setCategory] = useState('iOS');
   const [price, setPrice] = useState('');
   const [stockQty, setStockQty] = useState('');
   const [imageFile, setImageFile] = useState(null);
@@ -23,15 +24,18 @@ export default function AddProduct() {
 
     const formData = new FormData();
     formData.append('product_name', productName);
+    formData.append('category', category || 'iOS');
     formData.append('price', price);
-    formData.append('stock_qty', stockQty);
+    const safeStock = Math.min(30, Math.max(0, Number(stockQty || 0)));
+    formData.append('stock_qty', safeStock);
     if (imageFile) {
       formData.append('image', imageFile);
     }
 
     try {
+      const apiBase = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
       await axios.post(
-        'http://localhost/phone-shop/phone-shop/Backend/public/api/products',
+        `${apiBase}/products`,
         formData,
         {
           headers: {
@@ -55,7 +59,7 @@ export default function AddProduct() {
   };
 
   return (
-    <div className="max-w-md mx-auto my-10 p-6 bg-white rounded-2xl shadow-md border">
+    <div className="max-w-md mx-auto my-4 sm:my-10 p-4 sm:p-6 bg-white rounded-2xl shadow-md border">
       <h2 className="text-xl font-bold mb-6 text-gray-800">📦 បន្ថែមទំនិញថ្មី</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,7 +75,23 @@ export default function AddProduct() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-semibold mb-1">ប្រភេទ / Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full p-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
+          >
+            <option value="iOS">iOS (Apple, iPhone)</option>
+            <option value="Android">Android (Samsung, etc.)</option>
+            <option value="Accessories">Accessories (Case, Charger, Watch)</option>
+            <option value="Tablets">Tablets (iPad)</option>
+            <option value="Laptops">Laptops</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-sm font-semibold mb-1">តម្លៃ ($)</label>
             <input
@@ -86,15 +106,21 @@ export default function AddProduct() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-1">ចំនួនស្តុក</label>
+            <label className="block text-sm font-semibold mb-1">ចំនួនស្តុក (Max 30)</label>
             <input
               type="number"
+              min="0"
+              max="30"
               placeholder="10"
               value={stockQty}
-              onChange={(e) => setStockQty(e.target.value)}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setStockQty(val > 30 ? 30 : val);
+              }}
               className="w-full p-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             />
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Full Stock អតិបរមាត្រឹម 30 គ្រឿង</span>
           </div>
         </div>
 

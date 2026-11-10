@@ -10,7 +10,7 @@ import {
   FiImage
 } from 'react-icons/fi';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
 const NATIVE_API = 'http://localhost/phone-shop/repairs.php';
 
 export default function Repairs() {
@@ -145,11 +145,11 @@ export default function Repairs() {
   });
 
   return (
-    <div className="p-4 md:p-6 space-y-6 font-sans select-none">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 font-sans select-none">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3">
             <FiTool className="text-indigo-600" />
             <span>Repair Service Management</span>
           </h1>
@@ -160,7 +160,7 @@ export default function Repairs() {
 
         <button
           onClick={handleOpenModal}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-2xl shadow-lg shadow-indigo-600/30 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+          className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-2xl shadow-lg shadow-indigo-600/30 transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
         >
           <FiPlus size={16} />
           <span>New Repair Ticket</span>
@@ -168,13 +168,13 @@ export default function Repairs() {
       </div>
 
       {/* Main Table Content */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="font-extrabold text-slate-800 text-sm">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="font-extrabold text-slate-800 text-sm w-full sm:w-auto">
             Active Repair Queue ({filteredRepairs.length})
           </div>
 
-          <div className="relative w-full md:w-72">
+          <div className="relative w-full sm:w-72">
             <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
               type="text"
@@ -187,7 +187,7 @@ export default function Repairs() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left border-collapse">
+          <table className="w-full text-sm text-left border-collapse min-w-[650px]">
             <thead>
               <tr className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-200">
                 <th className="px-6 py-4">TICKET / CODE</th>
@@ -270,9 +270,9 @@ export default function Repairs() {
 
       {/* Modal Add Repair Ticket (ជាមួយប្រអប់ Upload រូបថត) */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in duration-150">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-150 my-auto">
+            <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-black text-slate-800 text-sm flex items-center gap-2">
                 <FiTool className="text-indigo-600" />
                 <span>New Repair Ticket</span>
@@ -282,7 +282,7 @@ export default function Repairs() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-3.5 max-h-[85vh] overflow-y-auto">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Ticket Code</label>
                 <input

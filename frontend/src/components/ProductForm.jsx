@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_BASE = 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
 
 export default function ProductList({ onAddNew, onEdit }) {
   const [products, setProducts] = useState([]);
@@ -45,7 +45,9 @@ export default function ProductList({ onAddNew, onEdit }) {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
     let cleanPath = imagePath.replace(/^\/+/, '');
-    return `http://localhost/phone-shop/phone-shop/Backend/public/${cleanPath}`;
+    if (!cleanPath.includes('/')) cleanPath = `uploads/products/${cleanPath}`;
+    const baseHost = API_BASE.replace(/\/api\/?$/, '');
+    return `${baseHost}/${cleanPath}`;
   };
 
   // តម្រង Filter តាម Search & Category
@@ -54,31 +56,31 @@ export default function ProductList({ onAddNew, onEdit }) {
       .toLowerCase()
       .includes(search.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()));
     
-    const matchesCategory = selectedCategory === 'All' || p.category_name === selectedCategory;
+    const matchesCategory = selectedCategory === 'All' || (p.category || p.category_name || '').toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 
   return (
-    <div className="p-6 bg-slate-50 min-h-screen">
+    <div className="p-3 sm:p-6 bg-slate-50 min-h-screen">
       {/* Header & Action Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">គ្រប់គ្រងទំនិញ (Products)</h1>
-          <p className="text-sm text-slate-500">បញ្ជីទំនិញសរុប និងការធ្វើបច្ចុប្បន្នភាពស្តុក</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">គ្រប់គ្រងទំនិញ (Products)</h1>
+          <p className="text-xs sm:text-sm text-slate-500">បញ្ជីទំនិញសរុប និងការធ្វើបច្ចុប្បន្នភាពស្តុក</p>
         </div>
         
         {/* ប៊ូតុងបន្ថែមទំនិញថ្មី */}
         <button
           onClick={onAddNew}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2"
+          className="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2"
         >
           <span>+</span> បន្ថែមទំនិញថ្មី
         </button>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-        <div className="relative w-full md:w-80">
+      <div className="bg-white p-4 rounded-2xl shadow-sm border mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div className="relative w-full sm:w-80">
           <input
             type="text"
             placeholder="ស្វែងរកតាមឈ្មោះ ឬ SKU..."
@@ -88,17 +90,18 @@ export default function ProductList({ onAddNew, onEdit }) {
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="p-2 border rounded-xl bg-slate-50 text-sm focus:outline-none"
+            className="w-full sm:w-auto p-2 border rounded-xl bg-slate-50 text-sm focus:outline-none font-medium"
           >
-            <option value="All">គ្រប់ប្រភេទទាំងអស់</option>
-            <option value="Smartphones">Smartphones</option>
+            <option value="All">គ្រប់ប្រភេទទាំងអស់ (All)</option>
+            <option value="iOS">iOS (Apple, iPhone)</option>
+            <option value="Android">Android (Samsung)</option>
             <option value="Accessories">Accessories</option>
-            <option value="Tablets">Tablets</option>
-            <option value="Smartwatches">Smartwatches</option>
+            <option value="Tablets">Tablets (iPad)</option>
+            <option value="Laptops">Laptops</option>
           </select>
         </div>
       </div>
@@ -106,7 +109,7 @@ export default function ProductList({ onAddNew, onEdit }) {
       {/* Product Table */}
       <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full text-left border-collapse text-sm min-w-[750px]">
             <thead>
               <tr className="bg-slate-100 text-slate-600 font-semibold border-b">
                 <th className="p-4">រូបភាព</th>
@@ -121,9 +124,18 @@ export default function ProductList({ onAddNew, onEdit }) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan="8" className="text-center py-8 text-gray-400">កំពុងទាញយកទិន្នន័យ...</td>
-                </tr>
+                [...Array(5)].map((_, i) => (
+                  <tr key={`form-skel-${i}`} className="border-b border-slate-100">
+                    <td className="p-4"><div className="w-12 h-12 bg-slate-200 rounded-lg animate-pulse" /></td>
+                    <td className="p-4"><div className="h-4 bg-slate-200 rounded w-36 animate-pulse" /></td>
+                    <td className="p-4"><div className="h-3.5 bg-slate-200 rounded w-20 animate-pulse" /></td>
+                    <td className="p-4"><div className="h-4 bg-slate-200 rounded w-24 animate-pulse" /></td>
+                    <td className="p-4"><div className="h-4 bg-indigo-100 rounded w-16 animate-pulse" /></td>
+                    <td className="p-4"><div className="h-4 bg-slate-200 rounded w-10 animate-pulse" /></td>
+                    <td className="p-4"><div className="h-6 bg-slate-200 rounded-full w-20 animate-pulse" /></td>
+                    <td className="p-4 text-center"><div className="h-8 bg-slate-100 rounded-lg w-16 mx-auto animate-pulse" /></td>
+                  </tr>
+                ))
               ) : filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="text-center py-8 text-gray-400">មិនមានទិន្នន័យទំនិញឡើយ</td>
@@ -158,8 +170,10 @@ export default function ProductList({ onAddNew, onEdit }) {
                       </td>
 
                       {/* ប្រភេទទំនិញ */}
-                      <td className="p-4 text-slate-600">
-                        {item.category_name || 'General'}
+                      <td className="p-4">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border">
+                          {item.category || item.category_name || 'General'}
+                        </span>
                       </td>
 
                       {/* តម្លៃ */}
@@ -167,13 +181,14 @@ export default function ProductList({ onAddNew, onEdit }) {
                         ${Number(item.price || 0).toFixed(2)}
                       </td>
 
-                      {/* ចំនួនស្តុក (Color Code) */}
+                      {/* ចំនួនស្តុក (Capped at 30) */}
                       <td className="p-4">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                          stock > 10 ? 'bg-emerald-100 text-emerald-700' :
+                          Math.min(30, stock) >= 30 ? 'bg-emerald-100 text-emerald-800' :
+                          stock > 5 ? 'bg-blue-100 text-blue-700' :
                           stock > 0 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
                         }`}>
-                          {stock > 0 ? `${stock} ក្នុងស្តុក` : 'អស់ពីស្តុក'}
+                          {Math.min(30, stock) >= 30 ? 'Full Stock (30)' : `${Math.min(30, stock)} / 30 គ្រឿង`}
                         </span>
                       </td>
 

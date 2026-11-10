@@ -27,7 +27,7 @@ export default function Warranties({ user }) {
   });
 
   // URL របស់ Backend Laravel
-  const API_BASE = 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+  const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
 
   useEffect(() => {
     fetchWarranties();
@@ -88,22 +88,22 @@ export default function Warranties({ user }) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <FiShield className="text-indigo-600" size={26} />
             គ្រប់គ្រងការធានា (Warranties)
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">
             តាមដាន និងរាប់ថយក្រោយថ្ងៃផុតកំណត់ការធានាជូនអតិថិជន
           </p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-medium transition shadow-sm"
+          className="w-full sm:w-auto justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm font-medium transition shadow-sm"
         >
           <FiPlus size={18} />
           បន្ថែមការធានាថ្មី
@@ -125,7 +125,7 @@ export default function Warranties({ user }) {
       {/* Table */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm min-w-[650px]">
             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold uppercase text-xs">
               <tr>
                 <th className="p-4">ឈ្មោះទំនិញ / Serial No.</th>
@@ -198,8 +198,8 @@ export default function Warranties({ user }) {
 
       {/* Add Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 w-full max-w-md rounded-xl p-6 shadow-xl">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white border border-slate-200 w-full max-w-md max-h-[92vh] overflow-y-auto rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl my-auto">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <FiShield className="text-indigo-600" />
               បន្ថែមប័ណ្ណធានាថ្មី
@@ -228,7 +228,7 @@ export default function Warranties({ user }) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">ឈ្មោះអតិថិជន *</label>
                   <input
@@ -250,7 +250,7 @@ export default function Warranties({ user }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1">ថ្ងៃចាប់ផ្តើម *</label>
                   <input

@@ -14,7 +14,7 @@ import {
   FiShield,
 } from 'react-icons/fi';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/phone-shop/Backend/public/api';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
 
 export default function Suppliers() {
   const [activeTab, setActiveTab] = useState('suppliers'); // 'suppliers' or 'add-product'
@@ -208,17 +208,17 @@ export default function Suppliers() {
   };
 
   return (
-    <div className="p-2 select-none font-sans">
+    <div className="p-1 sm:p-2 select-none font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Suppliers & Stock Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Suppliers & Stock Management</h1>
           <p className="text-xs text-slate-500">គ្រប់គ្រងអ្នកផ្គត់ផ្គង់ និងបន្ថែមទំនិញចូលស្តុកពេញលេញ</p>
         </div>
 
-        <div className="flex bg-slate-200/60 p-1 rounded-xl">
+        <div className="flex flex-wrap bg-slate-200/60 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab('suppliers')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition ${
               activeTab === 'suppliers' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600'
             }`}
           >
@@ -226,7 +226,7 @@ export default function Suppliers() {
           </button>
           <button
             onClick={() => setActiveTab('add-product')}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition ${
               activeTab === 'add-product' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600'
             }`}
           >
@@ -236,9 +236,9 @@ export default function Suppliers() {
       </div>
 
       {activeTab === 'suppliers' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Supplier Form */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-fit">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm h-fit">
             <h2 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
               <FiTruck className="text-indigo-600" />
               {editSupplierId ? 'Edit Supplier' : 'Add New Supplier'}
@@ -274,7 +274,7 @@ export default function Suppliers() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Phone Number</label>
                   <div className="relative">
@@ -353,47 +353,49 @@ export default function Suppliers() {
             ) : suppliers.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-xs">No suppliers found. Add your first supplier.</div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-50 text-left text-[11px] uppercase text-slate-400 font-bold border-b border-slate-100">
-                    <th className="px-5 py-3">SUPPLIER / COMPANY</th>
-                    <th className="px-5 py-3">CONTACT</th>
-                    <th className="px-5 py-3">ADDRESS</th>
-                    <th className="px-5 py-3 text-right">ACTION</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs">
-                  {suppliers.map((sup) => (
-                    <tr key={sup.id} className="hover:bg-slate-50 transition">
-                      <td className="px-5 py-3.5 font-bold text-slate-800">
-                        {sup.name || sup.company_name}
-                        {sup.contact_person && <div className="text-[11px] font-medium text-slate-400">👤 {sup.contact_person}</div>}
-                      </td>
-                      <td className="px-5 py-3.5 text-slate-600">
-                        {sup.phone || sup.phone_number || 'N/A'}
-                        {sup.email && <div className="text-[11px] text-slate-400">{sup.email}</div>}
-                      </td>
-                      <td className="px-5 py-3.5 text-slate-500 max-w-xs truncate">{sup.address || 'N/A'}</td>
-                      <td className="px-5 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleEditSupplier(sup)}
-                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                          >
-                            <FiEdit3 />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteSupplier(sup.id)}
-                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
-                          >
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[550px]">
+                  <thead>
+                    <tr className="bg-slate-50 text-left text-[11px] uppercase text-slate-400 font-bold border-b border-slate-100">
+                      <th className="px-5 py-3">SUPPLIER / COMPANY</th>
+                      <th className="px-5 py-3">CONTACT</th>
+                      <th className="px-5 py-3">ADDRESS</th>
+                      <th className="px-5 py-3 text-right">ACTION</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs">
+                    {suppliers.map((sup) => (
+                      <tr key={sup.id} className="hover:bg-slate-50 transition">
+                        <td className="px-5 py-3.5 font-bold text-slate-800">
+                          {sup.name || sup.company_name}
+                          {sup.contact_person && <div className="text-[11px] font-medium text-slate-400">👤 {sup.contact_person}</div>}
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-600">
+                          {sup.phone || sup.phone_number || 'N/A'}
+                          {sup.email && <div className="text-[11px] text-slate-400">{sup.email}</div>}
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-500 max-w-xs truncate">{sup.address || 'N/A'}</td>
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEditSupplier(sup)}
+                              className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                            >
+                              <FiEdit3 />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSupplier(sup.id)}
+                              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                            >
+                              <FiTrash2 />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
