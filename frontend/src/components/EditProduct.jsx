@@ -4,7 +4,9 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FiArrowLeft, FiSave } from 'react-icons/fi';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+import { getApiBase } from '../api/client';
+
+const API_BASE = getApiBase();
 const API_URL = `${API_BASE}/products`;
 const IMAGE_BASE_URL = API_BASE.replace(/\/api\/?$/, '/');
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiBase } from '../api/client';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+const API_BASE = getApiBase();
 
 export default function ProductList({ onAddNew, onEdit }) {
   const [products, setProducts] = useState([]);

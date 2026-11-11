@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getApiBase } from '../api/client';
 import { 
   FiShield, 
   FiPlus, 
@@ -26,8 +27,8 @@ export default function Warranties({ user }) {
     notes: ''
   });
 
-  // URL របស់ Backend Laravel
-  const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+  // URL របស់ Backend Laravel (Smart Localhost / Render)
+  const API_BASE = getApiBase();
 
   useEffect(() => {
     fetchWarranties();

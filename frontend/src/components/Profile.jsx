@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { FiUser, FiShield, FiKey } from 'react-icons/fi';
+import { getApiBase } from '../api/client';
 
-// 🟢 កំណត់ Base URL រត់តាម XAMPP Apache Backend
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+// 🟢 កំណត់ Base URL រត់តាម XAMPP Apache Backend ឬ Render Cloud
+const API_BASE = getApiBase();
 
 export default function Profile({ user }) {
   const [passForm, setPassForm] = useState({

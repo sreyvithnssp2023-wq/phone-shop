@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { apiFetch } from './api/client';
 
 export default function AddProduct() {
   const [productName, setProductName] = useState('');
@@ -33,16 +33,13 @@ export default function AddProduct() {
     }
 
     try {
-      const apiBase = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
-      await axios.post(
-        `${apiBase}/products`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      await apiFetch('/products', {
+        method: 'POST',
+        data: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       alert('បន្ថែមទំនិញ និងរូបភាពជោគជ័យ!');
       setProductName('');

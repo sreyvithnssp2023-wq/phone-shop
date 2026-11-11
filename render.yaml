@@ -18,6 +18,12 @@ services:
         value: base64:7Kx8XG3V1/2yJ9mK8uN7Q0vP5wR4tS3u1vX0yZ2aB4c=
       - key: APP_DEBUG
         value: "false"
+      - key: SESSION_DRIVER
+        value: "file"
+      - key: CACHE_STORE
+        value: "file"
+      - key: QUEUE_CONNECTION
+        value: "sync"
       - key: DB_CONNECTION
         value: mysql
       - key: DB_PORT

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FiBarChart2, FiDownload, FiFileText, FiTrendingUp, FiDollarSign, FiCalendar } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
+import { getApiBase } from '../api/client';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+const API_BASE = getApiBase();
 
 export default function Reports() {
   const [reportType, setReportType] = useState('sales');

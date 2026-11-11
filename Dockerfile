@@ -10,7 +10,8 @@ RUN apk add --no-cache \
     zip \
     unzip \
     oniguruma-dev \
-    && docker-php-ext-install pdo_mysql mbstring bcmath gd
+    sqlite-dev \
+    && docker-php-ext-install pdo_mysql pdo_sqlite mbstring bcmath gd
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -20,9 +21,9 @@ WORKDIR /app
 # Copy Backend application files
 COPY Backend/ .
 
-# Ensure storage and cache directories exist with correct permissions
-RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads/products \
-    && chmod -R 775 storage bootstrap/cache public/uploads
+# Ensure storage, cache, and database directories exist with correct permissions
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads/products database \
+    && chmod -R 777 storage bootstrap/cache public/uploads database
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction

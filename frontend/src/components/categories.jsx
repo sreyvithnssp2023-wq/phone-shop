@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FiPlus, FiEdit3, FiTrash2, FiArrowUp, FiArrowDown, FiX, FiLayers } from 'react-icons/fi';
+import { getApiBase } from '../api/client';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+const API_BASE = getApiBase();
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);

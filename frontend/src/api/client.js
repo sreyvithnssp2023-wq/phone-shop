@@ -1,14 +1,32 @@
 import axios from 'axios';
 
+const isBrowser = typeof window !== 'undefined';
+const isLocalhost =
+  isBrowser &&
+  (window.location.hostname === 'localhost' ||
+   window.location.hostname === '127.0.0.1');
+
 // 🟢 Smart Base URL detection for MySQL Laravel backend
 export const DEFAULT_API_BASE =
-  process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+  process.env.REACT_APP_API_BASE_URL ||
+  (isLocalhost
+    ? 'http://localhost/phone-shop/Backend/public/api'
+    : 'https://phone-shop-1-o2d6.onrender.com/api');
 
 export const CANDIDATE_API_URLS = [
   process.env.REACT_APP_API_BASE_URL,
-  'http://localhost/phone-shop/Backend/public/api',
-  'http://localhost:8000/api',
-  'http://127.0.0.1/phone-shop/Backend/public/api',
+  ...(isLocalhost
+    ? [
+        'http://localhost/phone-shop/Backend/public/api',
+        'http://localhost:8000/api',
+        'http://127.0.0.1/phone-shop/Backend/public/api',
+        'https://phone-shop-1-o2d6.onrender.com/api',
+      ]
+    : [
+        'https://phone-shop-1-o2d6.onrender.com/api',
+        'http://localhost/phone-shop/Backend/public/api',
+        'http://localhost:8000/api',
+      ]),
 ].filter(Boolean);
 
 let cachedWorkingBaseUrl = null;

@@ -15,9 +15,10 @@ import Warranties from './components/Warranties';
 import Settings from './components/Settings';
 import Login from './components/login';
 import { Toaster } from 'react-hot-toast';
+import { apiFetch, getApiBase } from './api/client';
 
-// 🟢 API Endpoint ភ្ជាប់ទៅកាន់ XAMPP Apache Backend
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+// 🟢 API Endpoint ភ្ជាប់ទៅកាន់ XAMPP Apache Backend ឬ Render Cloud
+const API_BASE = getApiBase();
 
 // Layout wrapper សម្រាប់ទំព័រដែលមាន Navbar & HeaderBar
 function MainLayout({ currentRole, setCurrentRole, currentUser, children }) {
@@ -62,7 +63,7 @@ export default function App() {
   const fetchUserFromDB = async (loginUserId = null) => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE}/users`);
+      const res = await apiFetch('/users');
       const usersList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
 
       if (usersList.length > 0) {

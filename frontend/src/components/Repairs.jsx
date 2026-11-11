@@ -10,7 +10,9 @@ import {
   FiImage
 } from 'react-icons/fi';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+import { getApiBase } from '../api/client';
+
+const API_BASE = getApiBase();
 const NATIVE_API = 'http://localhost/phone-shop/repairs.php';
 
 export default function Repairs() {

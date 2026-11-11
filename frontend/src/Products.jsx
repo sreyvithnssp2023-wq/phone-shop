@@ -5,7 +5,7 @@ import { FiEdit, FiEye, FiTrash2, FiX, FiRefreshCw, FiSearch, FiPackage, FiLayer
 import axios from 'axios';
 import { apiFetch, getImageUrl as resolveImageUrl, getApiBase } from './api/client';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost/phone-shop/Backend/public/api';
+const API_BASE = getApiBase();
 const API_URL = `${API_BASE}/products`;
 const MAX_STOCK_CAPACITY = 30; // 🟢 Full Stock អតិបរមាត្រឹម 30 គ្រឿង
 
