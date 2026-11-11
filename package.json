@@ -1,0 +1,15 @@
+{
+  "name": "phone-shop-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Phone Shop Management System - React Frontend & Laravel Backend",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm start",
+    "frontend:build": "npm --prefix frontend run build",
+    "frontend:start": "npm --prefix frontend start"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
