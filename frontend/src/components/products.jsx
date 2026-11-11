@@ -15,6 +15,9 @@ import {
   FiPlus,
   FiX,
   FiUploadCloud,
+  FiEdit,
+  FiTrash2,
+  FiEye,
 } from 'react-icons/fi';
 
 const MAX_STOCK_CAPACITY = 30; // 🟢 ចំនួនស្តុក Full Stock អតិបរមាត្រឹមតែ 30 គ្រឿងប៉ុណ្ណោះ
@@ -66,6 +69,95 @@ function Products() {
     image: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
+
+  // ✏️ Modal កែប្រែទំនិញ (Edit Product Modal State)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    product_name: '',
+    category: 'iOS',
+    price: '',
+    cost: '',
+    stock_qty: 30,
+    sku: '',
+    warranty_months: 12,
+    image: null,
+  });
+  const [editImagePreview, setEditImagePreview] = useState(null);
+
+  const handleEditClick = (product) => {
+    setEditingProduct(product);
+    const rawStock = Number(product.stock_qty !== undefined ? product.stock_qty : (product.stock || 0));
+    setEditFormData({
+      product_name: product.product_name || product.name || '',
+      category: product.category || product.category_name || 'iOS',
+      price: product.price || '',
+      cost: product.cost || '',
+      stock_qty: Math.min(MAX_STOCK_CAPACITY, Math.max(0, rawStock)),
+      sku: product.sku || product.barcode || '',
+      warranty_months: product.warranty_months || 0,
+      image: null,
+    });
+    setEditImagePreview(getImageUrl(product.image));
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+
+    const id = editingProduct.id || editingProduct.product_id;
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('_method', 'PUT');
+      formData.append('product_name', editFormData.product_name.trim());
+      formData.append('category', editFormData.category || 'iOS');
+      formData.append('price', Number(editFormData.price));
+      if (editFormData.cost) formData.append('cost', Number(editFormData.cost));
+
+      const safeStock = Math.min(MAX_STOCK_CAPACITY, Math.max(0, Number(editFormData.stock_qty || 0)));
+      formData.append('stock_qty', safeStock);
+
+      if (editFormData.sku) formData.append('sku', editFormData.sku.trim());
+      if (editFormData.warranty_months !== undefined) {
+        formData.append('warranty_months', Number(editFormData.warranty_months));
+      }
+      if (editFormData.image) formData.append('image', editFormData.image);
+
+      await apiFetch(`/products/${id}`, {
+        method: 'POST',
+        data: formData,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      toast.success('កែប្រែទិន្នន័យទំនិញជោគជ័យ!');
+      setIsEditModalOpen(false);
+      fetchProducts();
+    } catch (err) {
+      console.error('Error updating product:', err);
+      toast.error('មានបញ្ហាក្នុងការកែប្រែទិន្នន័យ!');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteProduct = async (product) => {
+    const id = product.id || product.product_id;
+    const name = product.product_name || product.name;
+    if (!window.confirm(`តើអ្នកពិតជាចង់លុបទំនិញ "${name}" (ID #${id}) នេះចេញពី MySQL មែនទេ?`)) {
+      return;
+    }
+
+    try {
+      await apiFetch(`/products/${id}`, { method: 'DELETE' });
+      toast.success(`លុបទំនិញ "${name}" ជោគជ័យ!`);
+      setProducts((prev) => prev.filter((p) => (p.id || p.product_id) !== id));
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      toast.error('មានបញ្ហាក្នុងការលុបទំនិញ!');
+    }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -342,6 +434,191 @@ function Products() {
         </div>
       )}
 
+      {/* ✏️ MODAL កែប្រែទំនិញ (EDIT PRODUCT MODAL) */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-100 relative my-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4 border-b pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold">
+                    ✏️
+                  </span>
+                  <span>កែប្រែទំនិញ (Edit Product)</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  កែប្រែទិន្នន័យទំនិញ ID #{editingProduct?.id || editingProduct?.product_id}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditImagePreview(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleUpdateProduct} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  ឈ្មោះទំនិញ (Product Name) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.product_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, product_name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  ប្រភេទ / Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={editFormData.category}
+                  onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
+                  required
+                >
+                  <option value="iOS">iOS (Apple, iPhone)</option>
+                  <option value="Android">Android (Samsung, Xiaomi...)</option>
+                  <option value="Accessories">Accessories (Case, Charger, Watch)</option>
+                  <option value="Tablets">Tablets (iPad)</option>
+                  <option value="Laptops">Laptops (MacBook)</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    តម្លៃលក់ / Price ($) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editFormData.price}
+                    onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 font-bold text-indigo-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    តម្លៃដើម / Cost ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editFormData.cost}
+                    onChange={(e) => setEditFormData({ ...editFormData, cost: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase">
+                      ចំនួនស្តុក (Max {MAX_STOCK_CAPACITY})
+                    </label>
+                    <span className="text-[10px] text-emerald-600 font-bold">ពេញស្តុក = {MAX_STOCK_CAPACITY}</span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max={MAX_STOCK_CAPACITY}
+                    value={editFormData.stock_qty}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setEditFormData({
+                        ...editFormData,
+                        stock_qty: val > MAX_STOCK_CAPACITY ? MAX_STOCK_CAPACITY : val,
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 font-bold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    SKU / Barcode
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.sku}
+                    onChange={(e) => setEditFormData({ ...editFormData, sku: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  រូបភាពទំនិញ / Product Image
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2.5 border border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition text-xs text-slate-600 bg-slate-50/50">
+                    <FiUploadCloud className="w-4 h-4 text-indigo-500" />
+                    <span>{editFormData.image ? editFormData.image.name : 'ប្តូររូបភាពថ្មី (Optional)...'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setEditFormData({ ...editFormData, image: file });
+                          setEditImagePreview(URL.createObjectURL(file));
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                  {editImagePreview && (
+                    <div className="w-11 h-11 rounded-xl border border-slate-200 overflow-hidden shrink-0 bg-white p-0.5 shadow-xs">
+                      <img src={editImagePreview} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditImagePreview(null);
+                  }}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+                >
+                  បោះបង់ (Cancel)
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow-md shadow-indigo-200 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <FiEdit className="w-4 h-4" />
+                  <span>{submitting ? 'កំពុងរក្សាទុក...' : 'រក្សាទុកការកែប្រែ'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* 4. Controls Bar: Search, Category Filter Chips, Stock Filter, and Sort */}
       <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 mb-4 shadow-sm space-y-3">
         {/* Row 1: Search & Sort Dropdowns */}
@@ -512,6 +789,9 @@ function Products() {
               <th style={{ padding: '12px 14px' }} className="whitespace-nowrap">
                 ស្ថានភាព
               </th>
+              <th style={{ padding: '12px 14px' }} className="whitespace-nowrap text-center">
+                សកម្មភាព
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -545,6 +825,9 @@ function Products() {
                   </td>
                   <td style={{ padding: '14px 14px' }}>
                     <div className="h-6 bg-slate-200 rounded-full w-20 animate-pulse" />
+                  </td>
+                  <td style={{ padding: '14px 14px' }}>
+                    <div className="h-6 bg-slate-100 rounded-lg w-16 mx-auto animate-pulse" />
                   </td>
                 </tr>
               ))
@@ -686,12 +969,42 @@ function Products() {
                           : 'Out of Stock'}
                       </span>
                     </td>
+
+                    {/* 🟢 Actions (Edit, Delete, View) */}
+                    <td style={{ padding: '12px 14px' }} className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => toast(`ទំនិញ: ${nameVal} | ប្រភេទ: ${categoryVal} | ស្តុក: ${stockVal}/${MAX_STOCK_CAPACITY} គ្រឿង`, { icon: '📱' })}
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+                          title="View Info"
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(item)}
+                          className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-600 hover:text-indigo-800 transition"
+                          title="Edit Product"
+                        >
+                          <FiEdit className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProduct(item)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition"
+                          title="Delete Product"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b' }}>
+                <td colSpan="8" style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b' }}>
                   <div className="flex flex-col items-center justify-center gap-2">
                     <FiPackage className="w-10 h-10 text-slate-300" />
                     <p className="font-semibold text-slate-700">
@@ -928,6 +1241,191 @@ function Products() {
                 >
                   <FiPlus className="w-4 h-4" />
                   <span>{submitting ? 'កំពុងរក្សាទុក...' : 'រក្សាទុកទំនិញ (Save Product)'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✏️ MODAL កែប្រែទំនិញ (EDIT PRODUCT MODAL) */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-slate-100 relative my-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4 border-b pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm font-bold">
+                    ✏️
+                  </span>
+                  <span>កែប្រែទំនិញ (Edit Product)</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  កែប្រែទិន្នន័យទំនិញ ID #{editingProduct?.id || editingProduct?.product_id}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditImagePreview(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition"
+              >
+                <FiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleUpdateProduct} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  ឈ្មោះទំនិញ (Product Name) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.product_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, product_name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  ប្រភេទ / Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={editFormData.category}
+                  onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium"
+                  required
+                >
+                  <option value="iOS">iOS (Apple, iPhone)</option>
+                  <option value="Android">Android (Samsung, Xiaomi...)</option>
+                  <option value="Accessories">Accessories (Case, Charger, Watch)</option>
+                  <option value="Tablets">Tablets (iPad)</option>
+                  <option value="Laptops">Laptops (MacBook)</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    តម្លៃលក់ / Price ($) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editFormData.price}
+                    onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 font-bold text-indigo-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    តម្លៃដើម / Cost ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editFormData.cost}
+                    onChange={(e) => setEditFormData({ ...editFormData, cost: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase">
+                      ចំនួនស្តុក (Max {MAX_STOCK_CAPACITY})
+                    </label>
+                    <span className="text-[10px] text-emerald-600 font-bold">ពេញស្តុក = {MAX_STOCK_CAPACITY}</span>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max={MAX_STOCK_CAPACITY}
+                    value={editFormData.stock_qty}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setEditFormData({
+                        ...editFormData,
+                        stock_qty: val > MAX_STOCK_CAPACITY ? MAX_STOCK_CAPACITY : val,
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 font-bold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    SKU / Barcode
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.sku}
+                    onChange={(e) => setEditFormData({ ...editFormData, sku: e.target.value })}
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  រូបភាពទំនិញ / Product Image
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="flex-1 flex items-center justify-center gap-2 px-3.5 py-2.5 border border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition text-xs text-slate-600 bg-slate-50/50">
+                    <FiUploadCloud className="w-4 h-4 text-indigo-500" />
+                    <span>{editFormData.image ? editFormData.image.name : 'ប្តូររូបភាពថ្មី (Optional)...'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setEditFormData({ ...editFormData, image: file });
+                          setEditImagePreview(URL.createObjectURL(file));
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                  {editImagePreview && (
+                    <div className="w-11 h-11 rounded-xl border border-slate-200 overflow-hidden shrink-0 bg-white p-0.5 shadow-xs">
+                      <img src={editImagePreview} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditImagePreview(null);
+                  }}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+                >
+                  បោះបង់ (Cancel)
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow-md shadow-indigo-200 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <FiEdit className="w-4 h-4" />
+                  <span>{submitting ? 'កំពុងរក្សាទុក...' : 'រក្សាទុកការកែប្រែ'}</span>
                 </button>
               </div>
             </form>
