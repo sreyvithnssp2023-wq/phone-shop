@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { clearAuthSession } from '../utils/auth';
-import { apiFetch } from '../api/client';
 
 export default function Logout({ setUser, setCurrentRole }) {
   const navigate = useNavigate();
@@ -12,21 +11,12 @@ export default function Logout({ setUser, setCurrentRole }) {
     if (hasExecuted.current) return;
     hasExecuted.current = true;
 
-    const performLogout = async () => {
-      try {
-        await apiFetch('/logout', { method: 'POST', timeout: 3000 }).catch(() => {});
-      } catch (e) {
-        // ignore
-      } finally {
-        clearAuthSession();
-        if (setUser) setUser(null);
-        if (setCurrentRole) setCurrentRole(null);
-        toast.success('Logged out successfully');
-        navigate('/login', { replace: true });
-      }
-    };
-
-    performLogout();
+    // Clear session & cookies cleanly on the client
+    clearAuthSession();
+    if (setUser) setUser(null);
+    if (setCurrentRole) setCurrentRole(null);
+    toast.success('Logged out successfully');
+    navigate('/login', { replace: true });
   }, [navigate, setUser, setCurrentRole]);
 
   return (

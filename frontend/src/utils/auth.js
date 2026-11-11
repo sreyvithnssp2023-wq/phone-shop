@@ -161,3 +161,4 @@ export function isRoleStaff(role) {
   const r = String(role).toLowerCase();
   return r.includes('cashier') || r.includes('staff') || r.includes('tech');
 }
+

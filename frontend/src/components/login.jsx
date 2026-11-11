@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiShoppingBag, FiLock, FiUser, FiShield, FiUsers } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { apiFetch } from '../api/client';
 import { saveAuthSession } from '../utils/auth';
 
 export default function Login({ setUser, setCurrentRole, onLoginSuccess }) {
@@ -23,7 +22,7 @@ export default function Login({ setUser, setCurrentRole, onLoginSuccess }) {
     setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -31,42 +30,7 @@ export default function Login({ setUser, setCurrentRole, onLoginSuccess }) {
     const username = form.username.trim();
     const password = form.password;
 
-    try {
-      // 1. Try authenticating with backend API
-      const res = await apiFetch('/login', {
-        method: 'POST',
-        data: { username, password },
-        timeout: 10000,
-      });
-
-      if (res?.data?.success && res.data.user) {
-        const loggedUser = res.data.user;
-        const loggedToken = res.data.token;
-        const loggedRole = res.data.role || loggedUser.role || 'Admin';
-
-        // Save session & cookies (auth_token, auth_user, auth_role)
-        saveAuthSession(loggedUser, loggedToken, loggedRole);
-
-        if (setUser) setUser(loggedUser);
-        if (setCurrentRole) setCurrentRole(loggedRole);
-        if (onLoginSuccess) onLoginSuccess(loggedUser);
-
-        toast.success(`Welcome back, ${loggedUser.name}! (${loggedRole})`);
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-    } catch (apiErr) {
-      console.warn('Backend login endpoint unavailable or returned error, evaluating credentials:', apiErr);
-
-      // Check if it's an explicit 401/422 credentials error from backend
-      if (apiErr?.response?.status === 401 || apiErr?.response?.status === 422) {
-        setError(apiErr?.response?.data?.message || 'Username or password incorrect!');
-        setLoading(false);
-        return;
-      }
-    }
-
-    // 2. Client-side fallback authentication (ensures offline / cold-start reliability)
+    // Pure Client-side Session & Cookie Authentication
     const lowerUser = username.toLowerCase();
     const isAdmin =
       lowerUser === 'admin' ||
@@ -92,11 +56,14 @@ export default function Login({ setUser, setCurrentRole, onLoginSuccess }) {
         role: 'Admin (Chork)',
         roles: 'Admin',
       };
-      saveAuthSession(adminUser, 'admin_session_token', 'Admin (Chork)');
+      // Create session and set cookies (auth_token, auth_user, auth_role)
+      saveAuthSession(adminUser, `admin_token_${Date.now()}`, 'Admin (Chork)');
+
       if (setUser) setUser(adminUser);
       if (setCurrentRole) setCurrentRole('Admin (Chork)');
       if (onLoginSuccess) onLoginSuccess(adminUser);
-      toast.success('Signed in successfully as Admin!');
+
+      toast.success('Signed in successfully as Admin! Session & Cookies created.');
       navigate('/dashboard', { replace: true });
     } else if (isStaff && isValidStaffPass) {
       const isTech = lowerUser.includes('tech');
@@ -108,14 +75,17 @@ export default function Login({ setUser, setCurrentRole, onLoginSuccess }) {
         roles: isTech ? 'Technician' : 'Cashier',
       };
       const roleName = staffUser.role;
-      saveAuthSession(staffUser, 'staff_session_token', roleName);
+      // Create session and set cookies (auth_token, auth_user, auth_role)
+      saveAuthSession(staffUser, `staff_token_${Date.now()}`, roleName);
+
       if (setUser) setUser(staffUser);
       if (setCurrentRole) setCurrentRole(roleName);
       if (onLoginSuccess) onLoginSuccess(staffUser);
-      toast.success(`Signed in successfully as Staff (${roleName})!`);
+
+      toast.success(`Signed in successfully as Staff (${roleName})! Session & Cookies created.`);
       navigate('/dashboard', { replace: true });
     } else {
-      setError('Username & Password incorrect! Please check your credentials.');
+      setError('Username or Password incorrect! Please check your credentials.');
     }
 
     setLoading(false);
@@ -223,9 +193,9 @@ export default function Login({ setUser, setCurrentRole, onLoginSuccess }) {
             <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
               <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
-                Cookie & Session Enabled
+                Session & Cookie Active
               </span>
-              <span className="text-slate-400">Default: 123</span>
+              <span className="text-slate-400">Password: 123</span>
             </div>
 
             <button
@@ -254,7 +224,7 @@ export default function Login({ setUser, setCurrentRole, onLoginSuccess }) {
                   setForm({ username: 'admin', password: '123' });
                   setActiveTab('admin');
                 }}
-                className="text-[11px] p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 text-center transition"
+                className="text-[11px] p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 text-center transition cursor-pointer"
               >
                 Admin (admin / 123)
               </button>
@@ -264,7 +234,7 @@ export default function Login({ setUser, setCurrentRole, onLoginSuccess }) {
                   setForm({ username: 'cashier', password: '123' });
                   setActiveTab('staff');
                 }}
-                className="text-[11px] p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 text-center transition"
+                className="text-[11px] p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold border border-slate-200 text-center transition cursor-pointer"
               >
                 Staff (cashier / 123)
               </button>

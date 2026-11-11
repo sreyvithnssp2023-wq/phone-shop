@@ -18,19 +18,17 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => array_filter(
-        array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', 'https://angkor-electronic-1qgb.vercel.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173')))
+        array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', 'https://angkor-electronic-1qgb.vercel.app,http://localhost:3000')))
     ),
 
-    'allowed_origins_patterns' => [
-        '#^https://.*\.vercel\.app$#',
-    ],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => ['Set-Cookie'],
+    'exposed_headers' => [],
 
     'max_age' => 86400,
 
-    'supports_credentials' => true,
+    'supports_credentials' => false,
 
 ];
