@@ -1,28 +1,40 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { clearAuthSession } from '../utils/auth';
+import { apiFetch } from '../api/client';
 
-export default function Logout({ setUser }) {
+export default function Logout({ setUser, setCurrentRole }) {
   const navigate = useNavigate();
-  const hasPrompted = useRef(false); // Flag to track if alert was shown
+  const hasExecuted = useRef(false);
 
   useEffect(() => {
-    // Prevent double execution in React Strict Mode
-    if (hasPrompted.current) return;
-    hasPrompted.current = true;
+    if (hasExecuted.current) return;
+    hasExecuted.current = true;
 
-    const confirmLogout = window.confirm(
-      'Are you sure you want to log out?'
-    );
+    const performLogout = async () => {
+      try {
+        await apiFetch('/logout', { method: 'POST', timeout: 3000 }).catch(() => {});
+      } catch (e) {
+        // ignore
+      } finally {
+        clearAuthSession();
+        if (setUser) setUser(null);
+        if (setCurrentRole) setCurrentRole(null);
+        toast.success('Logged out successfully');
+        navigate('/login', { replace: true });
+      }
+    };
 
-    if (confirmLogout) {
-      if (setUser) setUser(null);
-      toast.success('Logged out successfully');
-      navigate('/login', { replace: true });
-    } else {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [navigate, setUser]);
+    performLogout();
+  }, [navigate, setUser, setCurrentRole]);
 
-  return null;
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-slate-900 text-slate-300 text-sm font-semibold">
+      <div className="flex items-center gap-3">
+        <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <span>Logging out and clearing session & cookies...</span>
+      </div>
+    </div>
+  );
 }

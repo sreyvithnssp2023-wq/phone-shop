@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCookie } from '../utils/auth';
 
 /**
  * Production API base URL.
@@ -42,14 +43,18 @@ export const DEFAULT_API_BASE =
 const apiClient = axios.create({
   baseURL: DEFAULT_API_BASE,
   timeout: 15000,
+  withCredentials: true,
   headers: {
     Accept: 'application/json',
   },
 });
 
-// Add auth token to every request if available
+// Add auth token to every request if available (checked from cookie, sessionStorage, or localStorage)
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+  const token =
+    getCookie('auth_token') ||
+    sessionStorage.getItem('authToken') ||
+    localStorage.getItem('authToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
