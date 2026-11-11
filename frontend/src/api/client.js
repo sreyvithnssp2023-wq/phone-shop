@@ -6,15 +6,22 @@ const isLocalhost =
   (window.location.hostname === 'localhost' ||
    window.location.hostname === '127.0.0.1');
 
+const envUrl = process.env.REACT_APP_API_BASE_URL;
+// If we are on production cloud (e.g. Vercel), never allow a localhost fallback URL
+const validEnvUrl =
+  envUrl && (!isBrowser || isLocalhost || (!envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')))
+    ? envUrl
+    : null;
+
 // 🟢 Smart Base URL detection for MySQL Laravel backend
 export const DEFAULT_API_BASE =
-  process.env.REACT_APP_API_BASE_URL ||
+  validEnvUrl ||
   (isLocalhost
     ? 'http://localhost/phone-shop/Backend/public/api'
     : 'https://phone-shop-1-o2d6.onrender.com/api');
 
 export const CANDIDATE_API_URLS = [
-  process.env.REACT_APP_API_BASE_URL,
+  validEnvUrl,
   ...(isLocalhost
     ? [
         'http://localhost/phone-shop/Backend/public/api',
@@ -24,8 +31,6 @@ export const CANDIDATE_API_URLS = [
       ]
     : [
         'https://phone-shop-1-o2d6.onrender.com/api',
-        'http://localhost/phone-shop/Backend/public/api',
-        'http://localhost:8000/api',
       ]),
 ].filter(Boolean);
 
