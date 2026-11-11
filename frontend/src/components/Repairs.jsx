@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
   FiTool,
@@ -10,10 +9,7 @@ import {
   FiImage
 } from 'react-icons/fi';
 
-import { getApiBase } from '../api/client';
-
-const API_BASE = getApiBase();
-const NATIVE_API = 'http://localhost/phone-shop/repairs.php';
+import { apiFetch } from '../api/client';
 
 export default function Repairs() {
   const [repairs, setRepairs] = useState([]);
@@ -38,12 +34,7 @@ export default function Repairs() {
   const fetchRepairs = async () => {
     try {
       setLoading(true);
-      let res;
-      try {
-        res = await axios.get(`${API_BASE}/repairs`);
-      } catch (err) {
-        res = await axios.get(NATIVE_API);
-      }
+      const res = await apiFetch('/repairs');
       const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       setRepairs(list);
     } catch (err) {
@@ -99,11 +90,7 @@ export default function Repairs() {
 
     setSubmitting(true);
     try {
-      try {
-        await axios.post(`${API_BASE}/repairs`, form);
-      } catch (err) {
-        await axios.post(NATIVE_API, form);
-      }
+      await apiFetch('/repairs', { method: 'POST', data: form });
 
       toast.success('🎉 បង្កើត Ticket ជួសជុលជោគជ័យ!');
       setModalOpen(false);
@@ -118,15 +105,7 @@ export default function Repairs() {
 
   const handleStatusChange = async (ticketCodeOrId, newStatus) => {
     try {
-      try {
-        await axios.put(`${API_BASE}/repairs/${ticketCodeOrId}`, { status: newStatus });
-      } catch (err) {
-        await axios.post(NATIVE_API, {
-          _method: 'PUT',
-          ticket_code: ticketCodeOrId,
-          status: newStatus,
-        });
-      }
+      await apiFetch(`/repairs/${ticketCodeOrId}`, { method: 'PUT', data: { status: newStatus } });
 
       toast.success(`ប្តូរស្ថានភាពទៅជា ${newStatus} រួចរាល់!`);
       fetchRepairs();
