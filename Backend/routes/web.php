@@ -6,12 +6,15 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 
-// Route::get('/', function () {
-//     return Inertia::render('Index');
-// })->name('home');
+// 🩺 Instant Health Check for Render
+Route::get('/health', function () {
+    return response('OK', 200);
+});
+
 Route::get('/', function () {
     return view('index');
 });
+
 Route::get('/aticle', function () {
     return view('aticle');
 });

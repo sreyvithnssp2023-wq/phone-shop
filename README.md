@@ -105,3 +105,4 @@ npm install
 npm start
 ```
 Frontend runs at `http://localhost:3000` and proxies requests to `http://localhost/phone-shop/Backend/public/api`.
+

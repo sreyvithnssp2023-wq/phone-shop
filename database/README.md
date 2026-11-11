@@ -25,3 +25,4 @@ This directory contains the complete and up-to-date MySQL database schema and se
 2. Connect using the credentials provided by the cloud service.
 3. Open and run the contents of `database/phone-shop.sql`.
 4. Done! All tables and data will be created immediately.
+

@@ -27,7 +27,10 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-EXPOSE 8000
+# Default Render port is 10000, support concurrent requests
+ENV PORT=10000
+ENV PHP_CLI_SERVER_WORKERS=4
+EXPOSE 10000
 
 # Start Laravel using dynamic cloud port ($PORT)
-CMD ["sh", "-c", "php artisan config:clear && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
+CMD ["sh", "-c", "php artisan config:clear && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]

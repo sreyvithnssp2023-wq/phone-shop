@@ -4,8 +4,12 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
-    healthCheckPath: /api/products
+    healthCheckPath: /api/health
     envVars:
+      - key: PORT
+        value: "10000"
+      - key: PHP_CLI_SERVER_WORKERS
+        value: "4"
       - key: APP_NAME
         value: Phone Shop
       - key: APP_ENV

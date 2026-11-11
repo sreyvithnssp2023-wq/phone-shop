@@ -17,6 +17,15 @@ use App\Http\Controllers\Api\WarrantyController;
 |--------------------------------------------------------------------------
 */
 
+// 🩺 Cloud Health Check (Instant 200 OK for Render / Cloud port scanner)
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'service' => 'phone-shop-api',
+        'time' => now()->toIso8601String(),
+    ], 200);
+});
+
 // 👥 Users Route
 Route::get('/users', function () {
     try {
