@@ -4,6 +4,7 @@ FROM php:8.2-cli-alpine
 RUN apk add --no-cache \
     git \
     curl \
+    ca-certificates \
     libpng-dev \
     libxml2-dev \
     zip \
