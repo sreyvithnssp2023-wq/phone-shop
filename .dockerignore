@@ -1,0 +1,7 @@
+.git
+frontend
+Backend/vendor
+Backend/node_modules
+Backend/.env
+Backend/storage/*.key
+Backend/storage/logs/*.log

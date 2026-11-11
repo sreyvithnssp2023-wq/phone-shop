@@ -16,16 +16,17 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Copy application files
+# Copy Backend application files
 COPY . .
+
+# Ensure storage and cache directories exist with correct permissions
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads/products \
+    && chmod -R 775 storage bootstrap/cache public/uploads
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Prepare permissions
-RUN chmod -R 775 storage bootstrap/cache public/uploads
-
 EXPOSE 8000
 
-# Start Laravel
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
+# Start Laravel using dynamic cloud port ($PORT)
+CMD ["sh", "-c", "php artisan config:clear && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
